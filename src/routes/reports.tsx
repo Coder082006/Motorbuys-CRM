@@ -1,0 +1,126 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
+import { monthlySales, topBikes, formatKES, campaigns, smsCampaigns } from "@/lib/mock-data";
+
+export const Route = createFileRoute("/reports")({
+  component: () => <DashboardLayout><Reports /></DashboardLayout>,
+  head: () => ({ meta: [{ title: "Reports & Analytics — Motorbike CRM" }] }),
+});
+
+const COLORS = ["oklch(0.7 0.19 50)", "oklch(0.55 0.15 260)", "oklch(0.65 0.18 180)", "oklch(0.7 0.15 320)", "oklch(0.6 0.05 260)"];
+const stockData = [{ name: "Available", value: 92 }, { name: "Reserved", value: 18 }, { name: "Sold", value: 36 }];
+const loanStatus = [{ name: "Active", value: 58 }, { name: "Pending", value: 12 }, { name: "Completed", value: 41 }, { name: "Defaulted", value: 6 }];
+const salesByPerson = [{ name: "Peter", v: 22 }, { name: "Mary", v: 18 }, { name: "James", v: 15 }, { name: "Linet", v: 9 }];
+
+function Reports() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Reports & Analytics</h1>
+        <Select defaultValue="month">
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="week">This Week</SelectItem>
+            <SelectItem value="month">This Month</SelectItem>
+            <SelectItem value="year">This Year</SelectItem>
+            <SelectItem value="custom">Custom</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Sales Reports</h2>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card><CardHeader><CardTitle className="text-sm">Monthly Sales (Units)</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><BarChart data={monthlySales}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip />
+              <Bar dataKey="units" fill="oklch(0.7 0.19 50)" radius={[4,4,0,0]} />
+            </BarChart></ResponsiveContainer></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Revenue Trend</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><LineChart data={monthlySales}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} tickFormatter={(v) => `${(v/1e6).toFixed(0)}M`} /><Tooltip formatter={(v: number) => formatKES(v)} />
+              <Line type="monotone" dataKey="revenue" stroke="oklch(0.55 0.15 260)" strokeWidth={2} dot={{ r: 3 }} />
+            </LineChart></ResponsiveContainer></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Sales by Salesperson</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><BarChart data={salesByPerson} layout="vertical">
+              <XAxis type="number" fontSize={11} /><YAxis dataKey="name" type="category" fontSize={11} width={60} /><Tooltip />
+              <Bar dataKey="v" fill="oklch(0.65 0.18 180)" radius={[0,4,4,0]} />
+            </BarChart></ResponsiveContainer></CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Inventory Reports</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card><CardHeader><CardTitle className="text-sm">Stock Status</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><PieChart>
+              <Pie data={stockData} dataKey="value" nameKey="name" outerRadius={80}>
+                {stockData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+              </Pie><Tooltip /><Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart></ResponsiveContainer></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Top Selling Models</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><BarChart data={topBikes}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" /><XAxis dataKey="name" fontSize={10} /><YAxis fontSize={11} /><Tooltip />
+              <Bar dataKey="value" fill="oklch(0.7 0.19 50)" radius={[4,4,0,0]} />
+            </BarChart></ResponsiveContainer></CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Financing Reports</h2>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card><CardHeader><CardTitle className="text-sm">Loan Status</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><PieChart>
+              <Pie data={loanStatus} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80}>
+                {loanStatus.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+              </Pie><Tooltip /><Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart></ResponsiveContainer></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Monthly Collections</CardTitle></CardHeader>
+            <CardContent className="h-60"><ResponsiveContainer><BarChart data={monthlySales}>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.9 0.01 260)" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} tickFormatter={(v) => `${(v/1e6).toFixed(0)}M`} /><Tooltip formatter={(v: number) => formatKES(v)} />
+              <Bar dataKey="revenue" fill="oklch(0.55 0.15 260)" radius={[4,4,0,0]} />
+            </BarChart></ResponsiveContainer></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Defaulters</CardTitle></CardHeader>
+            <CardContent className="p-0"><Table>
+              <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Overdue</TableHead></TableRow></TableHeader>
+              <TableBody>
+                <TableRow><TableCell>David Kamau</TableCell><TableCell className="text-rose-600">{formatKES(34400)}</TableCell></TableRow>
+                <TableRow><TableCell>Tom Barasa</TableCell><TableCell className="text-rose-600">{formatKES(18200)}</TableCell></TableRow>
+                <TableRow><TableCell>Faith Njeri</TableCell><TableCell className="text-rose-600">{formatKES(26500)}</TableCell></TableRow>
+              </TableBody>
+            </Table></CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Marketing Reports</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card><CardHeader><CardTitle className="text-sm">SMS Campaigns Performance</CardTitle></CardHeader>
+            <CardContent className="p-0"><Table>
+              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Recipients</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableBody>{smsCampaigns.map(s => <TableRow key={s.id}><TableCell>{s.title}</TableCell><TableCell>{s.recipients}</TableCell><TableCell>{s.status}</TableCell></TableRow>)}</TableBody>
+            </Table></CardContent>
+          </Card>
+          <Card><CardHeader><CardTitle className="text-sm">Ad Campaigns ROI</CardTitle></CardHeader>
+            <CardContent className="p-0"><Table>
+              <TableHeader><TableRow><TableHead>Campaign</TableHead><TableHead>Spent</TableHead><TableHead>Leads</TableHead><TableHead>Cost/Lead</TableHead></TableRow></TableHeader>
+              <TableBody>{campaigns.map(c => <TableRow key={c.id}><TableCell>{c.title}</TableCell><TableCell>{formatKES(c.spent)}</TableCell><TableCell>{c.leads}</TableCell><TableCell>{c.leads ? formatKES(Math.round(c.spent/c.leads)) : "—"}</TableCell></TableRow>)}</TableBody>
+            </Table></CardContent>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+}
