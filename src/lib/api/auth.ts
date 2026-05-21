@@ -87,3 +87,20 @@ export async function getUserRole() {
   const user = await getCurrentUser();
   return user?.role ?? null;
 }
+
+// Registers a new user account with the backend.
+export async function register(data: {
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  phone: string | null;
+  password: string;
+  password2: string;
+}) {
+  return apiClient("/auth/register/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}

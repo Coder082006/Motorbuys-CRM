@@ -4,9 +4,13 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { isLoggedIn } from "../lib/api/auth";
 
 import appCss from "../styles.css?url";
 
@@ -112,6 +116,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  useEffect(() => {
+    let active = true;
+
+    const checkAccess = async () => {
+      const loggedIn = await isLoggedIn();
+      const isPublicPath = pathname === "/login" || pathname === "/register";
+
+      if (!active) {
+        return;
+      }
+
+      if (!loggedIn && !isPublicPath) {
+        navigate({ to: "/login" });
+      }
+
+      if (loggedIn && pathname === "/login") {
+        navigate({ to: "/" });
+      }
+    };
+
+    void checkAccess();
+
+    return () => {
+      active = false;
+    };
+  }, [navigate, pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

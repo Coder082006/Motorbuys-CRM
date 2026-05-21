@@ -1,21 +1,48 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Users, Bike, Kanban, CreditCard, Megaphone, Mail, Wrench, BarChart3, UserCog, LogOut } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
+  Home,
+  Users,
+  Bike,
+  Kanban,
+  CreditCard,
+  Megaphone,
+  Mail,
+  Wrench,
+  BarChart3,
+  UserCog,
+  LogOut,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { useCurrentUser } from "../lib/auth";
 
 const items = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Inventory", url: "/inventory", icon: Bike },
-  { title: "Sales Pipeline", url: "/sales", icon: Kanban },
-  { title: "Financing", url: "/financing", icon: CreditCard },
-  { title: "Advertising", url: "/advertising", icon: Megaphone },
-  { title: "Marketing", url: "/marketing", icon: Mail },
-  { title: "Service", url: "/service", icon: Wrench },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "User Management", url: "/users", icon: UserCog },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+    roles: ["admin", "sales", "financing", "advertising", "marketing", "service"],
+  },
+  { title: "Customers", url: "/customers", icon: Users, roles: ["admin", "sales"] },
+  { title: "Inventory", url: "/inventory", icon: Bike, roles: ["admin", "sales", "marketing"] },
+  { title: "Sales Pipeline", url: "/sales", icon: Kanban, roles: ["admin", "sales"] },
+  { title: "Financing", url: "/financing", icon: CreditCard, roles: ["admin", "financing"] },
+  { title: "Advertising", url: "/advertising", icon: Megaphone, roles: ["admin", "advertising"] },
+  { title: "Marketing", url: "/marketing", icon: Mail, roles: ["admin", "marketing"] },
+  { title: "Service", url: "/service", icon: Wrench, roles: ["admin", "service"] },
+  { title: "Reports", url: "/reports", icon: BarChart3, roles: ["admin"] },
+  { title: "User Management", url: "/users", icon: UserCog, roles: ["admin"] },
 ];
 
 export function AppSidebar() {
@@ -23,6 +50,8 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+  const { role } = useCurrentUser();
+  const visibleItems = items.filter((item) => role != null && item.roles.includes(role));
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
@@ -44,7 +73,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {visibleItems.map((item) => {
                 const active = path === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>

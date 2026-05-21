@@ -2,14 +2,32 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Bike, TrendingUp, DollarSign, CreditCard, Wrench } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 import { monthlySales, topBikes, recentSales, customers, formatKES } from "@/lib/mock-data";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { RouteGuard } from "../lib/auth";
+import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 
 export const Route = createFileRoute("/dashboard")({
-  component: () => <DashboardLayout><Dashboard /></DashboardLayout>,
-  head: () => ({ meta: [{ title: "Dashboard — Motorbike CRM" }] }),
+  component: () => (
+    <RouteGuard allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}>
+      <DashboardLayout><Dashboard /></DashboardLayout>
+    </RouteGuard>
+  ),
+  head: () => ({ meta: [{ title: "Dashboard - Motorbike CRM" }] }),
 });
 
 const COLORS = ["oklch(0.7 0.19 50)", "oklch(0.55 0.15 260)", "oklch(0.65 0.18 180)", "oklch(0.7 0.15 320)", "oklch(0.6 0.05 260)"];
@@ -34,11 +52,13 @@ function StatCard({ icon: Icon, label, value, trend }: any) {
 }
 
 function Dashboard() {
+  useAuthRedirect();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Welcome back — here's what's happening today.</p>
+        <p className="text-sm text-muted-foreground">Welcome back - here's what's happening today.</p>
       </div>
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -88,7 +108,7 @@ function Dashboard() {
             <Table>
               <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead>Bike</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
               <TableBody>
-                {recentSales.map(s => (
+                {recentSales.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell className="font-mono text-xs">{s.id}</TableCell>
                     <TableCell>{s.customer}</TableCell>
@@ -106,7 +126,7 @@ function Dashboard() {
             <Table>
               <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Region</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
               <TableBody>
-                {customers.slice(0, 5).map(c => (
+                {customers.slice(0, 5).map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.name}</TableCell>
                     <TableCell className="text-muted-foreground">{c.region}</TableCell>
