@@ -17,10 +17,7 @@ async function parseResponse(response: Response) {
 }
 
 async function apiClient(endpoint: string, options: ApiClientOptions = {}) {
-  const token =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("access_token")
-      : null;
+  const token = typeof window !== "undefined" ? window.localStorage.getItem("access_token") : null;
 
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");

@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type UserRole =
-  | "admin"
-  | "sales"
-  | "financing"
-  | "advertising"
-  | "marketing"
-  | "service";
+export type UserRole = "admin" | "sales" | "financing" | "advertising" | "marketing" | "service";
 
 export interface User {
   id: number;

@@ -62,7 +62,9 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="leading-tight">
-              <div className="text-sm font-bold tracking-tight text-sidebar-foreground">MOTORBIKE</div>
+              <div className="text-sm font-bold tracking-tight text-sidebar-foreground">
+                MOTORBIKE
+              </div>
               <div className="text-xs font-semibold tracking-widest text-brand-orange">CRM</div>
             </div>
           )}

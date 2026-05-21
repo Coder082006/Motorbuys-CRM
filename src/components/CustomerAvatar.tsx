@@ -21,20 +21,11 @@ export default function CustomerAvatar({
   const classes = `inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${sizeClasses[size]}`;
 
   if (profilePicture) {
-    return (
-      <img
-        src={profilePicture}
-        alt={initials}
-        className={`${classes} object-cover`}
-      />
-    );
+    return <img src={profilePicture} alt={initials} className={`${classes} object-cover`} />;
   }
 
   return (
-    <div
-      className={classes}
-      style={{ backgroundColor: avatarColor || "#f97316" }}
-    >
+    <div className={classes} style={{ backgroundColor: avatarColor || "#f97316" }}>
       {initials}
     </div>
   );

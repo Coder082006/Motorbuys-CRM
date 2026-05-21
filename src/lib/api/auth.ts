@@ -37,9 +37,7 @@ export async function login(username: string, password: string) {
 // Logs the user out on the backend, clears local storage, and redirects to login.
 export async function logout() {
   const refreshToken =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("refresh_token")
-      : null;
+    typeof window !== "undefined" ? window.localStorage.getItem("refresh_token") : null;
 
   try {
     await apiClient("/auth/logout/", {

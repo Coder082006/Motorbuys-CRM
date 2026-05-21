@@ -65,7 +65,9 @@ function LoginPage() {
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy-foreground">
             MOTORBIKE <span className="text-brand-orange">CRM</span>
           </h1>
-          <p className="text-sm text-brand-navy-foreground/60 mt-1">Sign in to your dealer dashboard</p>
+          <p className="text-sm text-brand-navy-foreground/60 mt-1">
+            Sign in to your dealer dashboard
+          </p>
         </div>
         <div className="rounded-2xl bg-card p-6 shadow-2xl border">
           <form onSubmit={handleSubmit} className="space-y-4">

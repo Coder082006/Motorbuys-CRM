@@ -77,15 +77,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Ride Dealership Pro" },
-      { name: "description", content: "A web application for motorbike dealerships to manage customers, inventory, sales, and more." },
+      {
+        name: "description",
+        content:
+          "A web application for motorbike dealerships to manage customers, inventory, sales, and more.",
+      },
       { name: "author", content: "Ride Dealership Pro" },
       { property: "og:title", content: "Ride Dealership Pro" },
-      { property: "og:description", content: "A web application for motorbike dealerships to manage customers, inventory, sales, and more." },
+      {
+        property: "og:description",
+        content:
+          "A web application for motorbike dealerships to manage customers, inventory, sales, and more.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@RideDealershipPro" },
       { name: "twitter:title", content: "Ride Dealership Pro" },
-      { name: "twitter:description", content: "A web application for motorbike dealerships to manage customers, inventory, sales, and more." },
+      {
+        name: "twitter:description",
+        content:
+          "A web application for motorbike dealerships to manage customers, inventory, sales, and more.",
+      },
     ],
     links: [
       {

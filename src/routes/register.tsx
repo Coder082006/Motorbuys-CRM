@@ -87,15 +87,30 @@ function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Confirm Password</Label>
-              <Input type="password" required value={password2} onChange={(e) => setPassword2(e.target.value)} />
+              <Input
+                type="password"
+                required
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+              />
             </div>
             <Button
               type="submit"
@@ -111,8 +126,12 @@ function RegisterPage() {
                 "Submit"
               )}
             </Button>
-            {errorMessage ? <p className="text-center text-sm text-destructive">{errorMessage}</p> : null}
-            {successMessage ? <p className="text-center text-sm text-emerald-600">{successMessage}</p> : null}
+            {errorMessage ? (
+              <p className="text-center text-sm text-destructive">{errorMessage}</p>
+            ) : null}
+            {successMessage ? (
+              <p className="text-center text-sm text-emerald-600">{successMessage}</p>
+            ) : null}
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link to="/login" className="text-brand-orange font-medium hover:underline">

@@ -10,9 +10,7 @@ import { useCurrentUser } from "../lib/auth";
 export function DashboardLayout({ children }: { children?: React.ReactNode }) {
   const { user, role } = useCurrentUser();
   const displayName =
-    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-    user?.username ||
-    "Guest";
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "Guest";
 
   const handleLogout = async () => {
     await logout();
@@ -44,9 +42,7 @@ export function DashboardLayout({ children }: { children?: React.ReactNode }) {
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 animate-fade-in">
-            {children ?? <Outlet />}
-          </main>
+          <main className="flex-1 p-4 md:p-6 animate-fade-in">{children ?? <Outlet />}</main>
         </div>
       </div>
     </SidebarProvider>

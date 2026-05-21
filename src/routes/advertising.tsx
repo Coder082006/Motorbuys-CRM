@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Facebook, Instagram, Tv, Radio, Globe, Image as ImageIcon, Pencil } from "lucide-react";
-import { formatKES } from "@/lib/mock-data";
+import { formatCurrency } from "@/lib/utils/formatters";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import { useCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign } from "../hooks/queries";
@@ -62,8 +62,8 @@ function Advertising() {
       </div>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Total Campaigns" value={campaigns.length} />
-        <Stat label="Total Budget" value={formatKES(totalBudget)} />
-        <Stat label="Total Spent" value={formatKES(totalSpent)} />
+        <Stat label="Total Budget" value={formatCurrency(totalBudget)} />
+        <Stat label="Total Spent" value={formatCurrency(totalSpent)} />
         <Stat label="Leads Generated" value={totalLeads} />
       </div>
 
@@ -74,8 +74,54 @@ function Advertising() {
       ) : campaigns.length === 0 ? (
         <Card className="p-6 text-center"><p className="font-semibold">No campaigns found</p><p className="text-sm text-muted-foreground">Create your first campaign to get started.</p><div className="pt-4"><Button onClick={()=>setOpen(true)} className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy">New Campaign</Button></div></Card>
       ) : (
-        <Card><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Platform</TableHead><TableHead>Status</TableHead><TableHead>Budget</TableHead><TableHead>Spent</TableHead><TableHead>Leads</TableHead><TableHead>Cost/Lead</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{campaigns.map((c:any) => { const Icon = platformIcon[c.platform] || Globe; return <TableRow key={c.id}><TableCell className="font-medium">{c.title}</TableCell><TableCell><span className="inline-flex items-center gap-1.5 text-sm"><Icon className="h-4 w-4 text-brand-orange" />{c.platform}</span></TableCell><TableCell><Badge className={statusColor[c.status]}>{c.status}</Badge></TableCell><TableCell>{formatKES(c.budget)}</TableCell><TableCell>{formatKES(c.amount_spent)}</TableCell><TableCell className="font-semibold">{c.leads_generated}</TableCell><TableCell>{c.leads_generated ? formatKES(Math.round(Number(c.amount_spent || 0) / Number(c.leads_generated || 1))) : "-"}</TableCell><TableCell className="text-right"><div className="inline-flex gap-1"><Button size="icon" variant="ghost" onClick={()=>onEdit(c)}><Pencil className="h-4 w-4" /></Button><Button size="icon" variant="ghost" className="text-destructive" onClick={()=>onDelete(c.id)}>Delete</Button></div></TableCell></TableRow>; })}</TableBody></Table></CardContent></Card>
-      )}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Platform</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Budget</TableHead>
+                  <TableHead>Spent</TableHead>
+                  <TableHead>Leads</TableHead>
+                  <TableHead>Cost/Lead</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaigns.map((c:any) => {
+                  const Icon = platformIcon[c.platform] || Globe;
+                  return (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-medium">{c.title}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          <Icon className="h-4 w-4 text-brand-orange" />
+                          {c.platform}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColor[c.status]}>{c.status}</Badge>
+                      </TableCell>
+                      <TableCell>{formatCurrency(c.budget)}</TableCell>
+                      <TableCell>{formatCurrency(c.amount_spent)}</TableCell>
+                      <TableCell className="font-semibold">{c.leads_generated}</TableCell>
+                      <TableCell>{c.leads_generated ? formatCurrency(Math.round(Number(c.amount_spent || 0) / Number(c.leads_generated || 1))) : "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={()=>onEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={()=>onDelete(c.id)}>Delete</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )
     </div>
   );
 }

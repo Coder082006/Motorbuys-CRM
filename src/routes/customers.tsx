@@ -30,15 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import {
-  Plus,
-  Search,
-  Eye,
-  Pencil,
-  Trash2,
-  TriangleAlert,
-  Users,
-} from "lucide-react";
+import { Plus, Search, Eye, Pencil, Trash2, TriangleAlert, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -234,8 +226,7 @@ function mapCustomerToForm(customer: Customer): CustomerFormValues {
     preferred_bike_type: customer.preferred_bike_type ?? "",
     how_heard: customer.how_heard ?? "",
     notes: customer.notes ?? "",
-    assigned_to:
-      customer.assigned_to != null ? String(customer.assigned_to) : "unassigned",
+    assigned_to: customer.assigned_to != null ? String(customer.assigned_to) : "unassigned",
     profile_picture: null,
   };
 }
@@ -257,8 +248,7 @@ function toCustomerPayload(values: CustomerFormValues) {
     preferred_bike_type: values.preferred_bike_type || null,
     how_heard: values.how_heard || null,
     notes: values.notes || null,
-    assigned_to:
-      values.assigned_to !== "unassigned" ? Number(values.assigned_to) : null,
+    assigned_to: values.assigned_to !== "unassigned" ? Number(values.assigned_to) : null,
     profile_picture: null,
   };
 }
@@ -413,9 +403,7 @@ function Customers() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{customer.full_name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {customer.phone}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{customer.phone}</TableCell>
                   <TableCell>{customer.region || "-"}</TableCell>
                   <TableCell>
                     <Badge className={statusClass(customer.status)}>
@@ -432,11 +420,7 @@ function Customers() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleEdit(customer)}
-                      >
+                      <Button size="icon" variant="ghost" onClick={() => handleEdit(customer)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -510,9 +494,8 @@ function Customers() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Customer</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              {deletingCustomer?.full_name || "this customer"}? This action
-              cannot be undone.
+              Are you sure you want to delete {deletingCustomer?.full_name || "this customer"}? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -582,9 +565,7 @@ function CustomersEmptyState({ onAddCustomer }: { onAddCustomer: () => void }) {
       <div className="flex flex-col items-center text-center gap-3">
         <Users className="h-10 w-10 text-muted-foreground" />
         <h2 className="text-xl font-semibold">No customers yet</h2>
-        <p className="text-sm text-muted-foreground">
-          Start by adding your first customer
-        </p>
+        <p className="text-sm text-muted-foreground">Start by adding your first customer</p>
         <Button
           className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
           onClick={onAddCustomer}
@@ -671,10 +652,7 @@ function CustomerFormDialog({
       onOpenChange(false);
     } catch (error) {
       setErrors({
-        form:
-          error instanceof Error
-            ? error.message
-            : "Failed to save customer",
+        form: error instanceof Error ? error.message : "Failed to save customer",
       });
     }
   };
@@ -713,10 +691,7 @@ function CustomerFormDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Phone</Label>
-            <Input
-              value={values.phone}
-              onChange={(e) => updateField("phone", e.target.value)}
-            />
+            <Input value={values.phone} onChange={(e) => updateField("phone", e.target.value)} />
             <FieldError message={errors.phone} />
           </div>
           <div className="space-y-1.5">
@@ -735,10 +710,7 @@ function CustomerFormDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Region</Label>
-            <Input
-              value={values.region}
-              onChange={(e) => updateField("region", e.target.value)}
-            />
+            <Input value={values.region} onChange={(e) => updateField("region", e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label>District</Label>
@@ -762,7 +734,9 @@ function CustomerFormDialog({
                 updateField("customer_type", value as "individual" | "business")
               }
             >
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="individual">Individual</SelectItem>
                 <SelectItem value="business">Business</SelectItem>
@@ -773,11 +747,11 @@ function CustomerFormDialog({
             <Label>Status</Label>
             <Select
               value={values.status}
-              onValueChange={(value) =>
-                updateField("status", value as CustomerStatus)
-              }
+              onValueChange={(value) => updateField("status", value as CustomerStatus)}
             >
-              <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="prospect">Prospect</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
@@ -797,9 +771,7 @@ function CustomerFormDialog({
             <Label>Preferred Bike Type</Label>
             <Input
               value={values.preferred_bike_type}
-              onChange={(e) =>
-                updateField("preferred_bike_type", e.target.value)
-              }
+              onChange={(e) => updateField("preferred_bike_type", e.target.value)}
             />
           </div>
           <div className="space-y-1.5 md:col-span-2">
@@ -849,12 +821,11 @@ function CustomerFormDialog({
             <Input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                updateField("profile_picture", e.target.files?.[0] ?? null)
-              }
+              onChange={(e) => updateField("profile_picture", e.target.files?.[0] ?? null)}
             />
             <p className="text-xs text-muted-foreground">
-              Image selection is captured in the form; actual upload handling should match backend file expectations.
+              Image selection is captured in the form; actual upload handling should match backend
+              file expectations.
             </p>
           </div>
           <div className="md:col-span-2">
@@ -897,9 +868,7 @@ function CustomerProfileSheet({
           <>
             <SheetHeader>
               <SheetTitle>Customer Profile</SheetTitle>
-              <SheetDescription>
-                Full customer details and account information
-              </SheetDescription>
+              <SheetDescription>Full customer details and account information</SheetDescription>
             </SheetHeader>
 
             <div className="mt-6 space-y-6">
@@ -926,19 +895,10 @@ function CustomerProfileSheet({
                 <ProfileField label="Region" value={customer.region} />
                 <ProfileField label="District" value={customer.district} />
                 <ProfileField label="Address" value={customer.address} />
-                <ProfileField
-                  label="Customer Type"
-                  value={customer.customer_type}
-                />
+                <ProfileField label="Customer Type" value={customer.customer_type} />
                 <ProfileField label="Budget" value={customer.budget} />
-                <ProfileField
-                  label="Preferred Bike Type"
-                  value={customer.preferred_bike_type}
-                />
-                <ProfileField
-                  label="Assigned Salesperson"
-                  value={customer.assigned_to_name}
-                />
+                <ProfileField label="Preferred Bike Type" value={customer.preferred_bike_type} />
+                <ProfileField label="Assigned Salesperson" value={customer.assigned_to_name} />
                 <ProfileField label="How Heard About Us" value={customer.how_heard} />
               </div>
 
@@ -956,18 +916,10 @@ function CustomerProfileSheet({
   );
 }
 
-function ProfileField({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null;
-}) {
+function ProfileField({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
+      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="text-sm">{value || "-"}</p>
     </div>
   );
