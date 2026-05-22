@@ -10,12 +10,7 @@ export default defineConfig({
       projects: ["./tsconfig.json"],
     }),
     tanstackStart({
-      target: "cloudflare-module",
       server: { entry: "server" },
-      tsr: {
-        target: "react",
-        autoCodeSplitting: true,
-      },
     }),
     tailwindcss(),
     react(),

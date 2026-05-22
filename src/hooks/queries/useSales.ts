@@ -14,6 +14,7 @@ export function useLeads(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.LEADS, params],
     queryFn: () => getLeads(params),
+    enabled: typeof window !== "undefined",
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -22,7 +23,7 @@ export function useLead(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.LEAD(id) : [...QUERY_KEYS.LEADS, "missing-id"],
     queryFn: () => getLead(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 
@@ -65,6 +66,7 @@ export function useSales(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.SALES, params],
     queryFn: () => getSales(params),
+    enabled: typeof window !== "undefined",
     staleTime: 3 * 60 * 1000,
   });
 }

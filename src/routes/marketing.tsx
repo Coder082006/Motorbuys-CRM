@@ -1,9 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,29 +30,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Send } from "lucide-react";
+import { getResults } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { Plus, Send } from "lucide-react";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
-  useSMSCampaigns,
-  useCreateSMSCampaign,
-  useSendSMSCampaign,
-  usePromotions,
   useCreatePromotion,
-  useDeletePromotion,
+  useCreateSMSCampaign,
   useCustomers,
+  useDeletePromotion,
+  usePromotions,
+  useSMSCampaigns,
+  useSendSMSCampaign,
 } from "../hooks/queries";
 
 export const Route = createFileRoute("/marketing")({
@@ -50,10 +58,12 @@ export const Route = createFileRoute("/marketing")({
 });
 
 const smsColor: Record<string, string> = {
-  sent: "bg-emerald-100 text-emerald-700",
-  scheduled: "bg-sky-100 text-sky-700",
   draft: "bg-slate-200 text-slate-700",
+  scheduled: "bg-sky-100 text-sky-700",
+  sent: "bg-emerald-100 text-emerald-700",
+  failed: "bg-rose-100 text-rose-700",
 };
+
 const promoColor: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700",
   upcoming: "bg-amber-100 text-amber-700",
@@ -62,64 +72,62 @@ const promoColor: Record<string, string> = {
 
 function Marketing() {
   useAuthRedirect();
+
   const smsQ = useSMSCampaigns();
   const promosQ = usePromotions();
+  const customersQ = useCustomers();
   const createSMS = useCreateSMSCampaign();
   const sendSMS = useSendSMSCampaign();
   const createPromo = useCreatePromotion();
   const deletePromo = useDeletePromotion();
-  const customersQ = useCustomers();
   const [smsOpen, setSmsOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
 
-  const sms = smsQ.data || [];
-  const promos = promosQ.data || [];
+  const sms = getResults<any>(smsQ.data);
+  const promos = getResults<any>(promosQ.data);
+  const customers = getResults<any>(customersQ.data);
 
   function onSendNow(campaign: any) {
-    if (!confirm(`Send SMS to ${campaign.recipient_count} recipients?`)) return;
+    if (!confirm(`Send SMS to ${campaign.recipient_count ?? 0} recipients?`)) return;
     sendSMS.mutate(campaign.id);
   }
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">Marketing</h1>
-      <Tabs defaultValue="sms">
+    <div className="mx-auto w-full max-w-7xl space-y-5">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Marketing</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage SMS campaigns and customer promotions.
+        </p>
+      </div>
+
+      <Tabs defaultValue="sms" className="space-y-4">
         <TabsList>
           <TabsTrigger value="sms">SMS Campaigns</TabsTrigger>
           <TabsTrigger value="promo">Promotions</TabsTrigger>
         </TabsList>
+
         <TabsContent value="sms" className="space-y-4">
           <div className="flex justify-end">
             <SmsModal
               open={smsOpen}
               onOpenChange={setSmsOpen}
-              creating={createSMS.isLoading}
-              customers={customersQ.data}
-              onCreate={(p: any) => createSMS.mutate(p)}
+              creating={createSMS.isPending}
+              customers={customers}
+              onCreate={(payload: Record<string, unknown>) => createSMS.mutateAsync(payload)}
             />
           </div>
 
           {smsQ.isLoading ? (
-            <Card className="p-6 animate-pulse" />
+            <Card className="h-48 animate-pulse" />
           ) : smsQ.isError ? (
-            <Card className="p-6">
-              <p>Failed to load SMS campaigns</p>
-              <div className="pt-2">
-                <Button onClick={() => smsQ.refetch()}>Retry</Button>
-              </div>
-            </Card>
+            <ErrorCard message="Failed to load SMS campaigns" onRetry={() => smsQ.refetch()} />
           ) : sms.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="font-semibold">No SMS campaigns</p>
-              <div className="pt-4">
-                <Button
-                  onClick={() => setSmsOpen(true)}
-                  className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
-                >
-                  New SMS Campaign
-                </Button>
-              </div>
-            </Card>
+            <EmptyState
+              title="No SMS campaigns"
+              action="New SMS Campaign"
+              onAction={() => setSmsOpen(true)}
+            />
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -134,19 +142,23 @@ function Marketing() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sms.map((s: any) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium">{s.title}</TableCell>
-                        <TableCell>{s.recipient_count}</TableCell>
+                    {sms.map((campaign: any) => (
+                      <TableRow key={campaign.id}>
+                        <TableCell className="font-medium">{campaign.title}</TableCell>
+                        <TableCell>{campaign.recipient_count ?? campaign.recipients?.length ?? 0}</TableCell>
                         <TableCell>
-                          <Badge className={smsColor[s.status]}>{s.status}</Badge>
+                          <Badge className={smsColor[campaign.status] ?? smsColor.draft}>
+                            {campaign.status}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{s.sent_at}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {campaign.sent_at ?? "-"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
-                            className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy gap-1"
-                            onClick={() => onSendNow(s)}
+                            className="gap-1 bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
+                            onClick={() => onSendNow(campaign)}
                           >
                             <Send className="h-3 w-3" /> Send Now
                           </Button>
@@ -159,55 +171,59 @@ function Marketing() {
             </Card>
           )}
         </TabsContent>
+
         <TabsContent value="promo" className="space-y-4">
           <div className="flex justify-end">
             <PromotionModal
               open={promoOpen}
               onOpenChange={setPromoOpen}
-              creating={createPromo.isLoading}
-              onCreate={(p: any) => createPromo.mutate(p)}
+              creating={createPromo.isPending}
+              onCreate={(payload: Record<string, unknown>) => createPromo.mutateAsync(payload)}
             />
           </div>
 
           {promosQ.isLoading ? (
-            <Card className="p-6 animate-pulse" />
+            <Card className="h-48 animate-pulse" />
           ) : promosQ.isError ? (
-            <Card className="p-6">
-              <p>Failed to load promotions</p>
-              <div className="pt-2">
-                <Button onClick={() => promosQ.refetch()}>Retry</Button>
-              </div>
-            </Card>
+            <ErrorCard message="Failed to load promotions" onRetry={() => promosQ.refetch()} />
           ) : promos.length === 0 ? (
-            <Card className="p-6 text-center">
-              <p className="font-semibold">No promotions</p>
-              <div className="pt-4">
-                <Button
-                  onClick={() => setPromoOpen(true)}
-                  className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
-                >
-                  New Promotion
-                </Button>
-              </div>
-            </Card>
+            <EmptyState
+              title="No promotions"
+              action="New Promotion"
+              onAction={() => setPromoOpen(true)}
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {promos.map((p: any) => (
-                <Card key={p.id} className="p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold">{p.title}</h3>
-                    <Badge className={promoColor[p.status] || "bg-slate-200"}>{p.status}</Badge>
+              {promos.map((promo: any) => (
+                <Card key={promo.id} className="p-5 transition-shadow hover:shadow-md">
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <h3 className="font-semibold">{promo.title}</h3>
+                    <Badge className={promoColor[promo.status] ?? "bg-slate-200"}>
+                      {promo.status}
+                    </Badge>
                   </div>
                   <p className="text-2xl font-bold text-brand-orange">
-                    {p.discount_percentage
-                      ? `${p.discount_percentage}%`
-                      : p.discount_amount
-                        ? formatCurrency(p.discount_amount)
-                        : ""}
+                    {promo.discount_percentage
+                      ? `${promo.discount_percentage}%`
+                      : promo.discount_amount
+                        ? formatCurrency(promo.discount_amount)
+                        : "Offer"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {p.start_date} &rarr; {p.end_date}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {promo.start_date} to {promo.end_date}
                   </p>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => {
+                        if (confirm("Delete promotion?")) deletePromo.mutate(promo.id);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -218,39 +234,88 @@ function Marketing() {
   );
 }
 
-function SmsModal({ open, onOpenChange, creating, customers, onCreate }: any) {
-  const [isOpen, setIsOpen] = useState(Boolean(open));
-  const [form, setForm] = useState<any>({ title: "", message: "", recipients: [] });
+function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <Card className="p-6">
+      <p className="font-semibold">{message}</p>
+      <div className="pt-2">
+        <Button onClick={onRetry}>Retry</Button>
+      </div>
+    </Card>
+  );
+}
+
+function EmptyState({
+  title,
+  action,
+  onAction,
+}: {
+  title: string;
+  action: string;
+  onAction: () => void;
+}) {
+  return (
+    <Card className="p-6 text-center">
+      <p className="font-semibold">{title}</p>
+      <div className="pt-4">
+        <Button onClick={onAction} className="bg-brand-orange text-brand-navy hover:bg-brand-orange/90">
+          {action}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function SmsModal({
+  open,
+  onOpenChange,
+  creating,
+  customers,
+  onCreate,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  creating: boolean;
+  customers: any[];
+  onCreate: (payload: Record<string, unknown>) => Promise<unknown>;
+}) {
+  const [form, setForm] = useState({ title: "", message: "", recipients: [] as number[] });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (open !== undefined && open !== isOpen) setIsOpen(open);
+  useEffect(() => {
+    if (!open) {
+      setErrors({});
+    }
+  }, [open]);
 
-  async function submit(e?: any) {
+  async function submit(e?: React.FormEvent) {
     e?.preventDefault();
     setErrors({});
+
+    if (!form.title.trim()) {
+      setErrors({ title: "Title is required" });
+      return;
+    }
+
+    if (!form.message.trim()) {
+      setErrors({ message: "Message is required" });
+      return;
+    }
+
     try {
-      await onCreate(form);
-      setIsOpen(false);
-      onOpenChange?.(false);
-    } catch (err: any) {
-      setErrors({ _general: err?.message || "Failed to create SMS campaign" });
+      await onCreate({ ...form, status: "draft" });
+      setForm({ title: "", message: "", recipients: [] });
+      onOpenChange(false);
+    } catch (error) {
+      setErrors({ form: error instanceof Error ? error.message : "Failed to create SMS campaign" });
     }
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(v) => {
-        setIsOpen(v);
-        onOpenChange?.(v);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
-        >
-          <Plus className="h-4 w-4 mr-1" /> New SMS Campaign
+        <Button className="bg-brand-orange text-brand-navy hover:bg-brand-orange/90">
+          <Plus className="mr-1 h-4 w-4" /> New SMS Campaign
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
@@ -262,8 +327,9 @@ function SmsModal({ open, onOpenChange, creating, customers, onCreate }: any) {
             <Label>Title</Label>
             <Input
               value={form.title}
-              onChange={(e) => setForm((s: any) => ({ ...s, title: e.target.value }))}
+              onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             />
+            {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Message</Label>
@@ -271,35 +337,47 @@ function SmsModal({ open, onOpenChange, creating, customers, onCreate }: any) {
               rows={4}
               placeholder="Hi {name}, ..."
               value={form.message}
-              onChange={(e) => setForm((s: any) => ({ ...s, message: e.target.value }))}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, message: event.target.value }))
+              }
             />
+            {errors.message && <p className="text-xs text-destructive">{errors.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Recipients</Label>
+            <Label>Recipient</Label>
             <Select
-              value={form.recipients.map(String)}
-              onValueChange={(v: any) => setForm((s: any) => ({ ...s, recipients: v.map(Number) }))}
-              multiSelect
+              value={form.recipients[0] ? String(form.recipients[0]) : undefined}
+              onValueChange={(value) =>
+                setForm((current) => ({ ...current, recipients: [Number(value)] }))
+              }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select recipients" />
+                <SelectValue placeholder="Select recipient" />
               </SelectTrigger>
               <SelectContent>
-                {customers?.map((c: any) => (
-                  <SelectItem key={c.id} value={String(c.id)}>
-                    {c.first_name} {c.last_name} — {c.phone}
+                {customers.length ? (
+                  customers.map((customer) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.first_name} {customer.last_name} - {customer.phone}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="none" disabled>
+                    No customers available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
+          {errors.form && <p className="text-sm text-destructive">{errors.form}</p>}
         </form>
         <DialogFooter>
           <Button
-            onClick={submit}
-            className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
+            onClick={() => void submit()}
+            disabled={creating}
+            className="bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
           >
-            Create
+            {creating ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -307,9 +385,18 @@ function SmsModal({ open, onOpenChange, creating, customers, onCreate }: any) {
   );
 }
 
-function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
-  const [isOpen, setIsOpen] = useState(Boolean(open));
-  const [form, setForm] = useState<any>({
+function PromotionModal({
+  open,
+  onOpenChange,
+  creating,
+  onCreate,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  creating: boolean;
+  onCreate: (payload: Record<string, unknown>) => Promise<unknown>;
+}) {
+  const [form, setForm] = useState({
     title: "",
     description: "",
     discount_percentage: "",
@@ -318,33 +405,34 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
     end_date: "",
     status: "active",
   });
-  if (open !== undefined && open !== isOpen) setIsOpen(open);
+  const [error, setError] = useState("");
 
-  async function submit(e?: any) {
+  async function submit(e?: React.FormEvent) {
     e?.preventDefault();
+    setError("");
+
     try {
       await onCreate(form);
-      setIsOpen(false);
-      onOpenChange?.(false);
-    } catch (err: any) {
-      console.error(err);
+      setForm({
+        title: "",
+        description: "",
+        discount_percentage: "",
+        discount_amount: "",
+        start_date: "",
+        end_date: "",
+        status: "active",
+      });
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create promotion");
     }
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(v) => {
-        setIsOpen(v);
-        onOpenChange?.(v);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
-        >
-          <Plus className="h-4 w-4 mr-1" /> New Promotion
+        <Button className="bg-brand-orange text-brand-navy hover:bg-brand-orange/90">
+          <Plus className="mr-1 h-4 w-4" /> New Promotion
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
@@ -356,15 +444,17 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
             <Label>Title</Label>
             <Input
               value={form.title}
-              onChange={(e) => setForm((s: any) => ({ ...s, title: e.target.value }))}
+              onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             />
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => setForm((s: any) => ({ ...s, description: e.target.value }))}
               rows={3}
+              value={form.description}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, description: event.target.value }))
+              }
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -373,7 +463,9 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
               <Input
                 type="date"
                 value={form.start_date}
-                onChange={(e) => setForm((s: any) => ({ ...s, start_date: e.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, start_date: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-1.5">
@@ -381,7 +473,9 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
               <Input
                 type="date"
                 value={form.end_date}
-                onChange={(e) => setForm((s: any) => ({ ...s, end_date: e.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, end_date: event.target.value }))
+                }
               />
             </div>
           </div>
@@ -391,8 +485,11 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
               <Input
                 type="number"
                 value={form.discount_percentage}
-                onChange={(e) =>
-                  setForm((s: any) => ({ ...s, discount_percentage: e.target.value }))
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    discount_percentage: event.target.value,
+                  }))
                 }
               />
             </div>
@@ -401,17 +498,21 @@ function PromotionModal({ open, onOpenChange, creating, onCreate }: any) {
               <Input
                 type="number"
                 value={form.discount_amount}
-                onChange={(e) => setForm((s: any) => ({ ...s, discount_amount: e.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, discount_amount: event.target.value }))
+                }
               />
             </div>
           </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </form>
         <DialogFooter>
           <Button
-            onClick={submit}
-            className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
+            onClick={() => void submit()}
+            disabled={creating}
+            className="bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
           >
-            Save
+            {creating ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

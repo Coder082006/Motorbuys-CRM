@@ -9,7 +9,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { isLoggedIn } from "../lib/api/auth";
 
 import appCss from "../styles.css?url";
@@ -130,24 +130,29 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [authChecked, setAuthChecked] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const isPublicPath = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
     let active = true;
 
     const checkAccess = async () => {
-      const loggedIn = await isLoggedIn();
-      const isPublicPath = pathname === "/login" || pathname === "/register";
+      const authenticated = await isLoggedIn();
 
       if (!active) {
         return;
       }
 
-      if (!loggedIn && !isPublicPath) {
+      setLoggedIn(authenticated);
+      setAuthChecked(true);
+
+      if (!authenticated && !isPublicPath) {
         navigate({ to: "/login" });
       }
 
-      if (loggedIn && pathname === "/login") {
-        navigate({ to: "/" });
+      if (authenticated && isPublicPath) {
+        navigate({ to: "/dashboard" });
       }
     };
 
@@ -157,6 +162,22 @@ function RootComponent() {
       active = false;
     };
   }, [navigate, pathname]);
+
+  if (!authChecked && !isPublicPath) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-background" />
+      </QueryClientProvider>
+    );
+  }
+
+  if (authChecked && !loggedIn && !isPublicPath) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-background" />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

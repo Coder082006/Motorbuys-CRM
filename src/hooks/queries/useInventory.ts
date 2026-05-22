@@ -13,6 +13,7 @@ export function useBikes(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.BIKES, params],
     queryFn: () => getBikes(params),
+    enabled: typeof window !== "undefined",
     staleTime: 3 * 60 * 1000,
   });
 }
@@ -21,7 +22,7 @@ export function useBike(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.BIKE(id) : [...QUERY_KEYS.BIKES, "missing-id"],
     queryFn: () => getBike(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 
@@ -29,6 +30,7 @@ export function useBikeModels() {
   return useQuery({
     queryKey: QUERY_KEYS.BIKE_MODELS,
     queryFn: getBikeModels,
+    enabled: typeof window !== "undefined",
     staleTime: 10 * 60 * 1000,
   });
 }

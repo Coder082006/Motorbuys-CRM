@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -52,6 +53,13 @@ const statusStyles: Record<string, string> = {
   "In Service": "bg-sky-100 text-sky-700",
 };
 
+const statusOptions = [
+  { value: "available", label: "Available" },
+  { value: "reserved", label: "Reserved" },
+  { value: "sold", label: "Sold" },
+  { value: "service", label: "In Service" },
+];
+
 function Inventory() {
   useAuthRedirect();
   const [q, setQ] = useState("");
@@ -63,7 +71,7 @@ function Inventory() {
   const params = (() => {
     const p = new URLSearchParams();
     if (q) p.set("search", q);
-    if (status !== "all") p.set("status", status.toLowerCase());
+    if (status !== "all") p.set("status", status);
     if (brand !== "all") p.set("brand", brand);
     const s = p.toString();
     return s ? `?${s}` : "";
@@ -75,7 +83,8 @@ function Inventory() {
   const update = useUpdateBike();
   const remove = useDeleteBike();
 
-  const bikesList: any[] = data || [];
+  const bikesList: any[] = getResults<any>(data);
+  const modelList: any[] = getResults<any>(modelsQ.data);
   const uniqueBrands = Array.from(
     new Set(bikesList.map((b) => b.model_detail?.brand).filter(Boolean)),
   );
@@ -97,11 +106,11 @@ function Inventory() {
         <BikeModal
           open={openModal}
           onOpenChange={setOpenModal}
-          models={modelsQ.data}
-          creating={create.isLoading}
-          updating={update.isLoading}
-          onCreate={(payload) => create.mutate(payload)}
-          onUpdate={(id, payload) => update.mutate({ id, data: payload })}
+          models={modelList}
+          creating={create.isPending}
+          updating={update.isPending}
+          onCreate={(payload: unknown) => create.mutate(payload)}
+          onUpdate={(id: number, payload: unknown) => update.mutate({ id, data: payload })}
           initialData={editing}
           onSaved={() => {
             setOpenModal(false);
@@ -125,9 +134,9 @@ function Inventory() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {Object.keys(statusStyles).map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
+            {statusOptions.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -230,12 +239,6 @@ function Inventory() {
       </div>
     </div>
   );
-
-  function handleDelete(id: number) {
-    if (!confirm("Delete this motorbike? This action cannot be undone.")) return;
-    remove.mutate(id);
-  }
-
   function mapStatusLabel(status: string) {
     switch (status) {
       case "available":
@@ -407,16 +410,16 @@ function BikeModal({
           <div className="space-y-1.5">
             <Label>Status</Label>
             <Select
-              value={mapStatusLabel(form.status)}
-              onValueChange={(v) => setForm((s: any) => ({ ...s, status: v.toLowerCase() }))}
+              value={form.status || "available"}
+              onValueChange={(v) => setForm((s: any) => ({ ...s, status: v }))}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.keys(statusStyles).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
+                {statusOptions.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
                   </SelectItem>
                 ))}
               </SelectContent>

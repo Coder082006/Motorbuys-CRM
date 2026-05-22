@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Facebook, Instagram, Tv, Radio, Globe, Image as ImageIcon, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import { useCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign } from "../hooks/queries";
@@ -46,7 +47,7 @@ function Advertising() {
   const [editing, setEditing] = useState<any>(null);
   const [open, setOpen] = useState(false);
 
-  const campaigns = campaignsQ.data || [];
+  const campaigns = getResults<any>(campaignsQ.data);
   const totalBudget = campaigns.reduce((s:any, c:any) => s + Number(c.budget || 0), 0);
   const totalSpent = campaigns.reduce((s:any, c:any) => s + Number(c.amount_spent || 0), 0);
   const totalLeads = campaigns.reduce((s:any, c:any) => s + Number(c.leads_generated || 0), 0);
@@ -58,7 +59,7 @@ function Advertising() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Ad Campaigns</h1>
-        <CampaignModal open={open} onOpenChange={setOpen} creating={create.isLoading} updating={update.isLoading} onCreate={(p:any)=>create.mutate(p)} onUpdate={(id:any,p:any)=>update.mutate({id,data:p})} initialData={editing} onSaved={()=>{ setOpen(false); setEditing(null); campaignsQ.refetch(); }} />
+        <CampaignModal open={open} onOpenChange={setOpen} creating={create.isPending} updating={update.isPending} onCreate={(p:any)=>create.mutate(p)} onUpdate={(id:any,p:any)=>update.mutate({id,data:p})} initialData={editing} onSaved={()=>{ setOpen(false); setEditing(null); campaignsQ.refetch(); }} />
       </div>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Total Campaigns" value={campaigns.length} />
@@ -121,7 +122,7 @@ function Advertising() {
             </Table>
           </CardContent>
         </Card>
-      )
+      )}
     </div>
   );
 }

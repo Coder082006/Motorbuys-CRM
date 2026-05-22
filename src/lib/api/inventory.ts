@@ -1,5 +1,11 @@
 import apiClient from "./client";
 
+type InventoryPayload = any;
+
+function body(data: InventoryPayload) {
+  return data instanceof FormData ? data : JSON.stringify(data);
+}
+
 // Fetches the inventory list with optional query parameters.
 export async function getBikes(params = "") {
   return apiClient(`/inventory/${params}`);
@@ -15,19 +21,26 @@ export async function getBikeModels() {
   return apiClient("/inventory/models/");
 }
 
-// Creates a new bike inventory record.
-export async function createBike(data: any) {
-  return apiClient("/inventory/", {
+export async function createBikeModel(data: Record<string, unknown>) {
+  return apiClient("/inventory/models/", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
+// Creates a new bike inventory record.
+export async function createBike(data: InventoryPayload) {
+  return apiClient("/inventory/", {
+    method: "POST",
+    body: body(data),
+  });
+}
+
 // Updates a bike inventory record by identifier.
-export async function updateBike(id: number, data: any) {
+export async function updateBike(id: number, data: InventoryPayload) {
   return apiClient(`/inventory/${id}/`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: body(data),
   });
 }
 

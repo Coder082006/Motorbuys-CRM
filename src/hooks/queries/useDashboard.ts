@@ -6,6 +6,7 @@ export function useDashboard() {
   return useQuery({
     queryKey: QUERY_KEYS.DASHBOARD,
     queryFn: getDashboard,
+    enabled: typeof window !== "undefined",
     staleTime: 60 * 1000,
     refetchInterval: 2 * 60 * 1000,
   });

@@ -1,5 +1,11 @@
 import apiClient from "./client";
 
+type CustomerPayload = Record<string, unknown> | FormData;
+
+function body(data: CustomerPayload) {
+  return data instanceof FormData ? data : JSON.stringify(data);
+}
+
 // Fetches the customer collection with optional query parameters.
 export async function getCustomers(params = "") {
   return apiClient(`/customers/${params}`);
@@ -11,18 +17,18 @@ export async function getCustomer(id: number) {
 }
 
 // Creates a new customer record.
-export async function createCustomer(data: any) {
+export async function createCustomer(data: CustomerPayload) {
   return apiClient("/customers/", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: body(data),
   });
 }
 
 // Updates an existing customer by identifier.
-export async function updateCustomer(id: number, data: any) {
+export async function updateCustomer(id: number, data: CustomerPayload) {
   return apiClient(`/customers/${id}/`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: body(data),
   });
 }
 

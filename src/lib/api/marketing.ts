@@ -5,6 +5,10 @@ export async function getSMSCampaigns(params = "") {
   return apiClient(`/marketing/sms/${params}`);
 }
 
+export async function getSMSCampaign(id: number) {
+  return apiClient(`/marketing/sms/${id}/`);
+}
+
 // Creates a new SMS campaign.
 export async function createSMSCampaign(data: any) {
   return apiClient("/marketing/sms/", {
@@ -31,6 +35,10 @@ export async function sendSMSCampaign(id: number) {
 // Fetches promotions with optional query parameters.
 export async function getPromotions(params = "") {
   return apiClient(`/marketing/promotions/${params}`);
+}
+
+export async function getPromotion(id: number) {
+  return apiClient(`/marketing/promotions/${id}/`);
 }
 
 // Creates a new promotion.

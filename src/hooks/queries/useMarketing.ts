@@ -13,6 +13,7 @@ export function useSMSCampaigns(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.SMS_CAMPAIGNS, params],
     queryFn: () => getSMSCampaigns(params),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -48,6 +49,7 @@ export function usePromotions(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.PROMOTIONS, params],
     queryFn: () => getPromotions(params),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }

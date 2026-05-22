@@ -39,9 +39,20 @@ export async function createPayment(data: any) {
   });
 }
 
+export async function getPayment(id: number) {
+  return apiClient(`/financing/payments/${id}/`);
+}
+
 // Initiates an M-Pesa STK push request.
 export async function initiateMpesa(data: any) {
   return apiClient("/financing/mpesa/stk-push/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function mpesaCallback(data: any) {
+  return apiClient("/financing/mpesa/callback/", {
     method: "POST",
     body: JSON.stringify(data),
   });

@@ -38,10 +38,21 @@ export async function getSales(params = "") {
   return apiClient(`/sales/${params}`);
 }
 
+export async function getSale(id: number) {
+  return apiClient(`/sales/${id}/`);
+}
+
 // Creates a new completed sale record.
 export async function createSale(data: any) {
   return apiClient("/sales/", {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSale(id: number, data: any) {
+  return apiClient(`/sales/${id}/`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }

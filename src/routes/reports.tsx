@@ -228,18 +228,21 @@ function Reports() {
   const salesReportQ = useQuery({
     queryKey: ["reports", "sales", range],
     queryFn: () => apiClient(`/reports/sales/${rangeQuery(range)}`) as Promise<SalesReport>,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
   const inventoryReportQ = useQuery({
     queryKey: ["reports", "inventory", range],
     queryFn: () => apiClient(`/reports/inventory/${rangeQuery(range)}`) as Promise<InventoryReport>,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
   const financingReportQ = useQuery({
     queryKey: ["reports", "financing", range],
     queryFn: () => apiClient(`/reports/financing/${rangeQuery(range)}`) as Promise<FinancingReport>,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
@@ -247,14 +250,53 @@ function Reports() {
     queryKey: ["reports", "advertising", range],
     queryFn: () =>
       apiClient(`/reports/advertising/${rangeQuery(range)}`) as Promise<AdvertisingReport>,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 
   const marketingReportQ = useQuery({
     queryKey: ["reports", "marketing", range],
     queryFn: () => apiClient(`/reports/marketing/${rangeQuery(range)}`) as Promise<MarketingReport>,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
+
+  const salesReport: SalesReport = salesReportQ.data ?? {
+    monthly_sales: [],
+    sales_by_payment_method: [],
+    sales_by_salesperson: [],
+    recent_sales: [],
+  };
+  const inventoryReport: InventoryReport = inventoryReportQ.data ?? {
+    stock_summary: [],
+    stock_by_brand: [],
+    top_selling_models: [],
+    low_stock_alert: [],
+  };
+  const financingReport: FinancingReport = financingReportQ.data ?? {
+    loans_summary: [],
+    total_loan_amount: "0",
+    total_collected: "0",
+    total_pending: "0",
+    defaulters: [],
+    monthly_collections: [],
+  };
+  const advertisingReport: AdvertisingReport = advertisingReportQ.data ?? {
+    campaigns_summary: [],
+    campaigns_by_platform: [],
+    total_budget: "0",
+    total_spent: "0",
+    total_leads_generated: 0,
+    overall_cost_per_lead: 0,
+    top_campaigns: [],
+  };
+  const marketingReport: MarketingReport = marketingReportQ.data ?? {
+    sms_summary: [],
+    total_sms_sent: 0,
+    active_promotions: [],
+    upcoming_promotions: [],
+    recent_sms_campaigns: [],
+  };
 
   return (
     <div className="space-y-6">

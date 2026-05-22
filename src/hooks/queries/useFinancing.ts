@@ -18,6 +18,7 @@ export function useLoans(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.LOANS, params],
     queryFn: () => getLoans(params),
+    enabled: typeof window !== "undefined",
     staleTime: 3 * 60 * 1000,
   });
 }
@@ -26,7 +27,7 @@ export function useLoan(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.LOAN(id) : [...QUERY_KEYS.LOANS, "missing-id"],
     queryFn: () => getLoan(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 
@@ -58,6 +59,7 @@ export function usePayments(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.PAYMENTS, params],
     queryFn: () => getPayments(params),
+    enabled: typeof window !== "undefined",
     staleTime: 60 * 1000,
   });
 }

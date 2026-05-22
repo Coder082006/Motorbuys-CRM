@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -66,6 +67,13 @@ const stColor: Record<string, string> = {
   delivered: "bg-slate-200 text-slate-700",
 };
 
+function mapStatusLabel(status: string) {
+  return status
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function Stat({ label, value }: any) {
   return (
     <Card>
@@ -88,8 +96,8 @@ function Service() {
   const usersQ = useUsers();
   const customersQ = useCustomers();
 
-  const records = recordsQ.data || [];
-  const parts = partsQ.data || [];
+  const records = getResults<any>(recordsQ.data);
+  const parts = getResults<any>(partsQ.data);
 
   const bikesReceivedToday = records.filter(
     (r: any) => new Date(r.received_date).toDateString() === new Date().toDateString(),
@@ -107,14 +115,7 @@ function Service() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Service Center</h1>
-        <ServiceModal
-          open={false}
-          onOpenChange={() => {}}
-          customers={customersQ.data}
-          bikes={[]}
-          technicians={usersQ.data}
-          onCreate={(d: any) => createRecord.mutate(d)}
-        />
+        <ServiceModal />
       </div>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Bikes Received" value={String(bikesReceivedToday)} />

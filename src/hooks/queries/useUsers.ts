@@ -18,6 +18,7 @@ export function useUsers() {
   return useQuery({
     queryKey: QUERY_KEYS.USERS,
     queryFn: getUsers,
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -26,7 +27,7 @@ export function useUser(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.USER(id) : [...QUERY_KEYS.USERS, "missing-id"],
     queryFn: () => getUser(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 
@@ -58,6 +59,7 @@ export function useProfile() {
   return useQuery({
     queryKey: QUERY_KEYS.PROFILE,
     queryFn: getProfile,
+    enabled: typeof window !== "undefined",
     staleTime: 10 * 60 * 1000,
   });
 }

@@ -14,6 +14,7 @@ export function useServiceRecords(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.SERVICE_RECORDS, params],
     queryFn: () => getServiceRecords(params),
+    enabled: typeof window !== "undefined",
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -22,7 +23,7 @@ export function useServiceRecord(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.SERVICE_RECORD(id) : [...QUERY_KEYS.SERVICE_RECORDS, "missing-id"],
     queryFn: () => getServiceRecord(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 
@@ -54,6 +55,7 @@ export function useSpareParts(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.SPARE_PARTS, params],
     queryFn: () => getSpareParts(params),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }

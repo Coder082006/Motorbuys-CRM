@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Phone } from "lucide-react";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -66,6 +67,8 @@ function Sales() {
   const customersQ = useCustomers();
   const update = useUpdateLead();
   const remove = useDeleteLead();
+  const leads = getResults<any>(leadsQ.data);
+  const sales = getResults<any>(salesQ.data);
 
   const isLoading = leadsQ.isLoading || salesQ.isLoading;
   const isError = leadsQ.isError;
@@ -81,9 +84,9 @@ function Sales() {
         <LeadModal
           open={showLeadModal}
           onOpenChange={setShowLeadModal}
-          customers={customersQ.data}
-          bikes={bikesQ.data}
-          users={usersQ.data}
+          customers={getResults<any>(customersQ.data)}
+          bikes={getResults<any>(bikesQ.data)}
+          users={getResults<any>(usersQ.data)}
           onCreate={() => {
             leadsQ.refetch();
           }}
@@ -108,7 +111,7 @@ function Sales() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {stages.map((s) => {
-            const items = (leadsQ.data || []).filter((l: any) => l.stage === s.api);
+            const items = leads.filter((l: any) => l.stage === s.api);
             return (
               <Card key={s.key} className={`p-3 border-t-4 ${s.color} bg-muted/30`}>
                 <div className="flex items-center justify-between mb-3">
@@ -195,7 +198,7 @@ function Sales() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(salesQ.data || []).map((s: any) => (
+                  {sales.map((s: any) => (
                     <tr key={s.id}>
                       <td className="py-2">{s.customer_name}</td>
                       <td>{s.motorbike_name || s.motorbike}</td>

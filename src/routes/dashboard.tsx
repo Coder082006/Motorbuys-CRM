@@ -27,6 +27,7 @@ import {
   YAxis,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -100,6 +101,7 @@ interface CustomerRow {
   region?: string;
   city?: string;
   status?: string;
+  created_at?: string;
 }
 
 function toNum(value: string | number | undefined): number {
@@ -107,7 +109,8 @@ function toNum(value: string | number | undefined): number {
 }
 
 function pickTimestamp(row: SaleRow | CustomerRow | { sale_date?: string; created_at?: string }) {
-  return row.sale_date || row.created_at || null;
+  const datedRow = row as { sale_date?: string; created_at?: string };
+  return datedRow.sale_date || datedRow.created_at || null;
 }
 
 function formatActivityTime(dateLike?: string | null) {
@@ -145,19 +148,17 @@ function StatCard({
   trend?: string;
 }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {label}
-            </p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
+    <Card className="h-full transition-shadow hover:shadow-md">
+      <CardContent className="flex h-full min-h-32 items-start justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase leading-5 text-muted-foreground">{label}</p>
+          <p className="mt-2 text-2xl font-bold leading-none">{value}</p>
+          <div className="min-h-5">
             {trend && <p className="text-xs text-emerald-600 mt-1">{trend}</p>}
           </div>
-          <div className="h-11 w-11 rounded-lg bg-brand-orange/10 text-brand-orange flex items-center justify-center">
-            <Icon className="h-5 w-5" />
-          </div>
+        </div>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-orange/10 text-brand-orange">
+          <Icon className="h-5 w-5" />
         </div>
       </CardContent>
     </Card>
@@ -177,7 +178,7 @@ function EmptyCard({ title, message }: { title: string; message: string }) {
 
 function LoadingStatGrid() {
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
       {Array.from({ length: 6 }).map((_, index) => (
         <Card key={index} className="animate-pulse">
           <CardContent className="p-5 space-y-3">
@@ -224,7 +225,7 @@ function Dashboard() {
     value: item.total_sold,
   }));
 
-  const salesRows = ((salesQ.data || []) as SaleRow[])
+  const salesRows = (getResults<SaleRow>(salesQ.data) as SaleRow[])
     .slice()
     .sort(
       (a, b) =>
@@ -233,7 +234,7 @@ function Dashboard() {
     )
     .slice(0, 5);
 
-  const customerRows = ((customersQ.data || []) as CustomerRow[]).slice(0, 5);
+  const customerRows = getResults<CustomerRow>(customersQ.data).slice(0, 5);
 
   const activityItems = [
     ...salesRows.slice(0, 2).map((sale) => ({
@@ -264,72 +265,54 @@ function Dashboard() {
 
   if (isLoading) {
     return (
-      <RouteGuard
-        allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}
-      >
-        <DashboardLayout>
-          <div className="space-y-6 p-6">
-            <LoadingStatGrid />
-            <div className="grid gap-4 lg:grid-cols-3">
-              <Card className="lg:col-span-2 animate-pulse">
-                <CardContent className="h-72" />
-              </Card>
-              <Card className="animate-pulse">
-                <CardContent className="h-72" />
-              </Card>
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="animate-pulse">
-                <CardContent className="h-64" />
-              </Card>
-              <Card className="animate-pulse">
-                <CardContent className="h-64" />
-              </Card>
-            </div>
-          </div>
-        </DashboardLayout>
-      </RouteGuard>
+      <div className="mx-auto w-full max-w-7xl space-y-6">
+        <LoadingStatGrid />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+          <Card className="animate-pulse">
+            <CardContent className="h-80" />
+          </Card>
+          <Card className="animate-pulse">
+            <CardContent className="h-80" />
+          </Card>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <Card className="animate-pulse">
+            <CardContent className="h-64" />
+          </Card>
+          <Card className="animate-pulse">
+            <CardContent className="h-64" />
+          </Card>
+        </div>
+      </div>
     );
   }
 
   if (isError) {
     return (
-      <RouteGuard
-        allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}
-      >
-        <DashboardLayout>
-          <div className="flex min-h-[60vh] items-center justify-center p-6">
-            <Card className="w-full max-w-lg">
-              <CardContent className="p-6 text-center">
-                <p className="text-destructive mb-4 font-semibold">
-                  Failed to load dashboard data.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    void dashboardQ.refetch();
-                    void salesReportQ.refetch();
-                    void inventoryReportQ.refetch();
-                    void customersQ.refetch();
-                    void salesQ.refetch();
-                  }}
-                >
-                  Retry
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </DashboardLayout>
-      </RouteGuard>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card className="w-full max-w-lg">
+          <CardContent className="p-6 text-center">
+            <p className="text-destructive mb-4 font-semibold">Failed to load dashboard data.</p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void dashboardQ.refetch();
+                void salesReportQ.refetch();
+                void inventoryReportQ.refetch();
+                void customersQ.refetch();
+                void salesQ.refetch();
+              }}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <RouteGuard
-      allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}
-    >
-      <DashboardLayout>
-        <div className="space-y-6 p-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-sm text-muted-foreground">
@@ -337,7 +320,7 @@ function Dashboard() {
             </p>
           </div>
 
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
             <StatCard
               icon={Users}
               label="Customers"
@@ -375,12 +358,12 @@ function Dashboard() {
             />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Monthly Revenue</CardTitle>
               </CardHeader>
-              <CardContent className="h-72">
+              <CardContent className="h-80">
                 {monthlySales.length ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthlySales}>
@@ -409,7 +392,7 @@ function Dashboard() {
               <CardHeader>
                 <CardTitle className="text-base">Top Selling Models</CardTitle>
               </CardHeader>
-              <CardContent className="h-72">
+              <CardContent className="h-80">
                 {topModels.length ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -421,7 +404,7 @@ function Dashboard() {
                         outerRadius={85}
                         paddingAngle={2}
                       >
-                        {topModels.map((_, index) => (
+                        {topModels.map((_item: { name: string; value: number }, index: number) => (
                           <Cell key={index} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -439,7 +422,7 @@ function Dashboard() {
             </Card>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Recent Sales</CardTitle>
@@ -546,9 +529,7 @@ function Dashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </DashboardLayout>
-    </RouteGuard>
+    </div>
   );
 }
 

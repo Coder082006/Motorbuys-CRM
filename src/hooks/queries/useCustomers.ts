@@ -16,6 +16,7 @@ export function useCustomers(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.CUSTOMERS, params],
     queryFn: () => getCustomers(params),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -24,7 +25,7 @@ export function useCustomer(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.CUSTOMER(id) : [...QUERY_KEYS.CUSTOMERS, "missing-id"],
     queryFn: () => getCustomer(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 

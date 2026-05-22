@@ -24,7 +24,7 @@ function LoginPage() {
     const checkLoggedIn = async () => {
       const loggedIn = await isLoggedIn();
       if (mounted && loggedIn) {
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }
     };
 
@@ -42,7 +42,7 @@ function LoginPage() {
 
     try {
       await login(username, password);
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     } catch (error) {
       if (error instanceof TypeError) {
         setErrorMessage("Cannot connect to server. Make sure the backend is running.");

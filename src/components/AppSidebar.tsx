@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
   Users,
@@ -26,6 +26,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useCurrentUser } from "../lib/auth";
+import { logout } from "../lib/api/auth";
 
 const items = [
   {
@@ -49,7 +50,6 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const navigate = useNavigate();
   const { role } = useCurrentUser();
   const visibleItems = items.filter((item) => role != null && item.roles.includes(role));
 
@@ -95,7 +95,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => navigate({ to: "/login" })}>
+            <SidebarMenuButton onClick={() => void logout()}>
               <LogOut className="h-4 w-4" />
               {!collapsed && <span>Sign Out</span>}
             </SidebarMenuButton>

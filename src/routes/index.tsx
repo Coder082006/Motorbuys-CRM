@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   BarChart3,
   Bell,
@@ -19,6 +19,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
+import { getResults } from "@/lib/api/client";
+import { logout } from "@/lib/api/auth";
 import { RouteGuard, useCurrentUser } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -105,7 +107,6 @@ function pickLatestTimestamp(row: any) {
 
 function HomePage() {
   useAuthRedirect();
-  const navigate = useNavigate();
   const { user } = useCurrentUser();
 
   const dashboardQ = useDashboard();
@@ -152,7 +153,12 @@ function HomePage() {
       ]
     : [];
 
-  const salesRows = (salesQ.data || [])
+  const salesList = getResults<any>(salesQ.data);
+  const followUpList = getResults<any>(followUpsQ.data);
+  const paymentList = getResults<any>(paymentsQ.data);
+  const serviceList = getResults<any>(serviceQ.data);
+
+  const salesRows = salesList
     .slice()
     .sort(
       (a: any, b: any) =>
@@ -160,31 +166,31 @@ function HomePage() {
     )
     .slice(0, 5);
 
-  const followUpRows = (followUpsQ.data || []).slice(0, 5);
+  const followUpRows = followUpList.slice(0, 5);
 
   const activityItems = [
-    ...(salesQ.data || []).slice(0, 2).map((sale: any) => ({
+    ...salesList.slice(0, 2).map((sale: any) => ({
       label: `Sale recorded for ${sale.customer_name || "customer"}`,
       detail: `${sale.motorbike_name || sale.motorbike || "motorbike"}`,
       time: formatActivityTime(pickLatestTimestamp(sale)),
       icon: ShieldCheck,
       timestamp: pickLatestTimestamp(sale),
     })),
-    ...(followUpsQ.data || []).slice(0, 1).map((lead: any) => ({
+    ...followUpList.slice(0, 1).map((lead: any) => ({
       label: `New lead added`,
       detail: lead.customer_name || "Customer",
       time: formatActivityTime(pickLatestTimestamp(lead)),
       icon: UserRound,
       timestamp: pickLatestTimestamp(lead),
     })),
-    ...(paymentsQ.data || []).slice(0, 1).map((payment: any) => ({
+    ...paymentList.slice(0, 1).map((payment: any) => ({
       label: "Payment received",
       detail: formatTsh(payment.amount),
       time: formatActivityTime(pickLatestTimestamp(payment)),
       icon: CreditCard,
       timestamp: pickLatestTimestamp(payment),
     })),
-    ...(serviceQ.data || []).slice(0, 1).map((record: any) => ({
+    ...serviceList.slice(0, 1).map((record: any) => ({
       label: "Service request opened",
       detail: record.customer_name || "Customer",
       time: formatActivityTime(pickLatestTimestamp(record)),
@@ -279,7 +285,7 @@ function HomePage() {
                     <Bell className="h-5 w-5" />
                   </button>
                   <Button
-                    onClick={() => navigate({ to: "/login" })}
+                    onClick={() => void logout()}
                     className="h-11 rounded-xl bg-[#f97316] px-5 text-sm font-semibold text-white hover:bg-[#ea6a0a]"
                   >
                     <LogOut className="mr-2 h-4 w-4" />

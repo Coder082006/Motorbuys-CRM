@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Smartphone } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
+import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -77,8 +78,8 @@ function Financing() {
   const updateLoan = useUpdateLoan();
   const initiateMpesa = useInitiateMpesa();
 
-  const loans = loansQ.data || [];
-  const payments = paymentsQ.data || [];
+  const loans = getResults<any>(loansQ.data);
+  const payments = getResults<any>(paymentsQ.data);
 
   const totalActive = loans.filter((l: any) => l.status === "active").length;
   const totalCollectedThisMonth = payments.reduce((s: any, p: any) => s + Number(p.amount || 0), 0);
@@ -93,7 +94,7 @@ function Financing() {
           open={loanModalOpen}
           onOpenChange={setLoanModalOpen}
           customers={customersQ.data}
-          creating={createLoan.isLoading}
+          creating={createLoan.isPending}
           onCreate={(data: any) => createLoan.mutate(data)}
         />
       </div>
@@ -221,8 +222,6 @@ function Financing() {
           )}
         </TabsContent>
       </Tabs>
-
-      <MpesaModal />
     </div>
   );
 
@@ -265,11 +264,51 @@ function Financing() {
   }
 }
 
-function LoanModal() {
+function LoanModal({
+  open,
+  onOpenChange,
+  creating,
+  onCreate,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  creating?: boolean;
+  onCreate?: (data: Record<string, unknown>) => void;
+  customers?: unknown;
+}) {
+  const [isOpen, setIsOpen] = useState(Boolean(open));
+  const [form, setForm] = useState({
+    customer: "",
+    sale: "",
+    loan_amount: "",
+    down_payment: "",
+    interest_rate: "",
+    duration_months: "",
+    monthly_installment: "",
+  });
+
+  if (open !== undefined && open !== isOpen) setIsOpen(open);
+
+  function submit(e?: React.FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
+    onCreate?.(form);
+    setIsOpen(false);
+    onOpenChange?.(false);
+  }
+
   return (
-    <Dialog>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(value) => {
+        setIsOpen(value);
+        onOpenChange?.(value);
+      }}
+    >
       <DialogTrigger asChild>
-        <Button className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
+        >
           <Plus className="h-4 w-4 mr-1" /> Add Loan
         </Button>
       </DialogTrigger>
@@ -277,38 +316,79 @@ function LoanModal() {
         <DialogHeader>
           <DialogTitle>New Loan</DialogTitle>
         </DialogHeader>
-        <form className="grid grid-cols-2 gap-4">
+        <form onSubmit={submit} className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5 col-span-2">
             <Label>Customer</Label>
-            <Input />
+            <Input
+              value={form.customer}
+              onChange={(e) => setForm((current) => ({ ...current, customer: e.target.value }))}
+            />
           </div>
           <div className="space-y-1.5 col-span-2">
             <Label>Sale</Label>
-            <Input placeholder="Sale ID" />
+            <Input
+              placeholder="Sale ID"
+              value={form.sale}
+              onChange={(e) => setForm((current) => ({ ...current, sale: e.target.value }))}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Loan Amount</Label>
-            <Input type="number" />
+            <Input
+              type="number"
+              value={form.loan_amount}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, loan_amount: e.target.value }))
+              }
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Down Payment</Label>
-            <Input type="number" />
+            <Input
+              type="number"
+              value={form.down_payment}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, down_payment: e.target.value }))
+              }
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Interest %</Label>
-            <Input type="number" />
+            <Input
+              type="number"
+              value={form.interest_rate}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, interest_rate: e.target.value }))
+              }
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Duration (mo)</Label>
-            <Input type="number" />
+            <Input
+              type="number"
+              value={form.duration_months}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, duration_months: e.target.value }))
+              }
+            />
           </div>
           <div className="space-y-1.5 col-span-2">
             <Label>Monthly Installment</Label>
-            <Input type="number" />
+            <Input
+              type="number"
+              value={form.monthly_installment}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, monthly_installment: e.target.value }))
+              }
+            />
           </div>
         </form>
         <DialogFooter>
-          <Button className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy">
+          <Button
+            onClick={() => onCreate?.(form)}
+            disabled={creating}
+            className="bg-brand-orange hover:bg-brand-orange/90 text-brand-navy"
+          >
             Create Loan
           </Button>
         </DialogFooter>

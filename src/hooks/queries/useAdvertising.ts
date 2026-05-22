@@ -12,6 +12,7 @@ export function useCampaigns(params = "") {
   return useQuery({
     queryKey: [...QUERY_KEYS.CAMPAIGNS, params],
     queryFn: () => getCampaigns(params),
+    enabled: typeof window !== "undefined",
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -20,7 +21,7 @@ export function useCampaign(id?: number) {
   return useQuery({
     queryKey: id ? QUERY_KEYS.CAMPAIGN(id) : [...QUERY_KEYS.CAMPAIGNS, "missing-id"],
     queryFn: () => getCampaign(id as number),
-    enabled: !!id,
+    enabled: typeof window !== "undefined" && !!id,
   });
 }
 

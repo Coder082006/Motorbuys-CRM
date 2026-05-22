@@ -42,6 +42,7 @@ import {
   useChangePassword,
 } from "../hooks/queries";
 import { register } from "../lib/api/auth";
+import { getResults } from "../lib/api/client";
 
 export const Route = createFileRoute("/users")({
   component: () => (
@@ -71,7 +72,8 @@ function UsersPage() {
   const deleteUserMut = useDeleteUser();
   const updateProfile = useUpdateProfile();
   const changePassword = useChangePassword();
-  const createUserMut = useMutation((data: any) => register(data), {
+  const createUserMut = useMutation({
+    mutationFn: (data: any) => register(data),
     onSuccess: () => usersQ.refetch(),
   });
 
@@ -91,7 +93,7 @@ function UsersPage() {
       </Card>
     );
 
-  const list = usersQ.data || [];
+  const list = getResults<any>(usersQ.data);
 
   return (
     <div className="space-y-5">
@@ -108,7 +110,7 @@ function UsersPage() {
           <UserModal
             open={openNew}
             onOpenChange={setOpenNew}
-            creating={createUserMut.isLoading}
+            creating={createUserMut.isPending}
             onCreate={(p: any) => createUserMut.mutate(p)}
           />
         </div>
@@ -185,13 +187,13 @@ function UsersPage() {
         open={openProfileEdit}
         onOpenChange={setOpenProfileEdit}
         profile={profileQ.data}
-        updating={updateProfile.isLoading}
+        updating={updateProfile.isPending}
         onUpdate={(p: any) => updateProfile.mutate(p)}
       />
       <ChangePasswordModal
         open={openChangePwd}
         onOpenChange={setOpenChangePwd}
-        changing={changePassword.isLoading}
+        changing={changePassword.isPending}
         onChange={(p: any) => changePassword.mutate(p)}
       />
     </div>
