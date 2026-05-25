@@ -1,676 +1,849 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  BarChart3,
-  Bell,
+  ArrowLeft,
+  ArrowRight,
   Bike,
-  BriefcaseBusiness,
-  CreditCard,
+  Facebook,
+  Gauge,
+  Instagram,
+  Linkedin,
   LogOut,
-  Megaphone,
-  ShieldAlert,
+  Mail,
+  MapPin,
+  Phone,
+  Search,
   ShieldCheck,
-  TrendingUp,
+  ShoppingBag,
+  Star,
+  Truck,
   UserRound,
-  Users,
-  Wrench,
+  Wallet,
+  Zap,
 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AppSidebar } from "@/components/AppSidebar";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Card, CardContent } from "@/components/ui/card";
-import { getResults } from "@/lib/api/client";
-import { logout } from "@/lib/api/auth";
-import { RouteGuard, useCurrentUser } from "../lib/auth";
-import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
-import {
-  useDashboard,
-  useLeads,
-  usePayments,
-  useSales,
-  useSalesReport,
-  useServiceRecords,
-} from "../hooks/queries";
+import { BASE_URL } from "@/lib/api/client";
+import { getShopProducts, type MotorbikeProduct } from "@/lib/api/shop";
+import { formatCurrency } from "@/lib/utils/formatters";
+import { useAuth } from "../context/AuthContext";
 
 export const Route = createFileRoute("/")({
-  component: HomePage,
+  component: ShopHomePage,
   head: () => ({
     meta: [
-      { title: "Motorbike CRM Dashboard" },
+      { title: "Motorbuy - Premium Motorbike Marketplace" },
       {
         name: "description",
         content:
-          "Internal dashboard for motorbike dealership staff covering sales, inventory, financing, service, and campaigns.",
+          "Browse premium motorbikes, compare trusted inventory, and purchase online through Motorbuy.",
       },
     ],
   }),
 });
 
-const roleBadgeClasses: Record<string, string> = {
-  admin: "border-purple-400/30 bg-purple-500/15 text-purple-200",
-  sales: "border-sky-400/30 bg-sky-500/15 text-sky-200",
-  financing: "border-emerald-400/30 bg-emerald-500/15 text-emerald-200",
-  advertising: "border-orange-400/30 bg-orange-500/15 text-orange-200",
-  marketing: "border-pink-400/30 bg-pink-500/15 text-pink-200",
-  service: "border-slate-400/30 bg-slate-500/15 text-slate-200",
+type DisplayProduct = MotorbikeProduct & {
+  isDemo?: boolean;
 };
 
-function formatTsh(value: unknown) {
-  const numeric = Number(String(value ?? 0).replace(/[^\d.-]/g, ""));
-  if (!Number.isFinite(numeric)) {
-    return `TSh ${String(value ?? 0)}`;
-  }
+type ProductShelf = {
+  title: string;
+  subtitle: string;
+  products: DisplayProduct[];
+};
 
-  return `TSh ${numeric.toLocaleString()}`;
+const bikeImages = [
+  "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=85",
+  "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?auto=format&fit=crop&w=1200&q=85",
+  "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=1200&q=85",
+  "https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1200&q=85",
+  "https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?auto=format&fit=crop&w=1200&q=85",
+  "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?auto=format&fit=crop&w=1200&q=85",
+];
+
+const heroImage =
+  "https://images.unsplash.com/photo-1558981359-219d6364c9c8?auto=format&fit=crop&w=1800&q=85";
+
+const demoProducts: DisplayProduct[] = [
+  {
+    id: -101,
+    model_detail: {
+      brand: "Honda",
+      model_name: "Click 125i",
+      engine_cc: 125,
+      bike_type: "automatic",
+    },
+    color: "black",
+    year: 2025,
+    price: 245000,
+    status: "available",
+    image: null,
+    notes: "Smooth automatic scooter for city rides and daily movement.",
+    isDemo: true,
+  },
+  {
+    id: -102,
+    model_detail: { brand: "Yamaha", model_name: "NMAX", engine_cc: 155, bike_type: "automatic" },
+    color: "blue",
+    year: 2025,
+    price: 385000,
+    status: "available",
+    image: null,
+    notes: "Premium automatic bike with comfort seating and strong road presence.",
+    isDemo: true,
+  },
+  {
+    id: -201,
+    model_detail: {
+      brand: "TVS",
+      model_name: "Neo NX",
+      engine_cc: 110,
+      bike_type: "semi-automatic",
+    },
+    color: "red",
+    year: 2024,
+    price: 185000,
+    status: "available",
+    image: null,
+    notes: "Semi-automatic everyday bike with simple handling and low running cost.",
+    isDemo: true,
+  },
+  {
+    id: -202,
+    model_detail: {
+      brand: "Bajaj",
+      model_name: "Boxer X",
+      engine_cc: 150,
+      bike_type: "semi-automatic",
+    },
+    color: "green",
+    year: 2024,
+    price: 225000,
+    status: "reserved",
+    image: null,
+    notes: "Durable semi-automatic option for business, delivery, and rural roads.",
+    isDemo: true,
+  },
+  {
+    id: -301,
+    model_detail: { brand: "Yamaha", model_name: "FZ-S", engine_cc: 149, bike_type: "manual" },
+    color: "silver",
+    year: 2025,
+    price: 410000,
+    status: "available",
+    image: null,
+    notes: "Manual street bike with sporty styling and responsive handling.",
+    isDemo: true,
+  },
+  {
+    id: -302,
+    model_detail: { brand: "Honda", model_name: "CB 150R", engine_cc: 150, bike_type: "manual" },
+    color: "white",
+    year: 2024,
+    price: 390000,
+    status: "sold",
+    image: null,
+    notes: "Manual road bike built for confident riding and clean performance.",
+    isDemo: true,
+  },
+];
+
+function productName(product: MotorbikeProduct) {
+  const name = [product.model_detail?.brand, product.model_detail?.model_name]
+    .filter(Boolean)
+    .join(" ");
+  return name || `Motorbike #${product.id}`;
 }
 
-function formatActivityTime(dateLike?: string | null) {
-  if (!dateLike) {
-    return "Today";
-  }
-
-  const date = new Date(dateLike);
-  if (Number.isNaN(date.getTime())) {
-    return "Today";
-  }
-
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  if (diffMs < 60 * 60 * 1000) {
-    return `${Math.max(1, Math.floor(diffMs / (60 * 1000)))} mins ago`;
-  }
-
-  if (diffMs < 24 * 60 * 60 * 1000) {
-    return `${Math.max(1, Math.floor(diffMs / (60 * 60 * 1000)))} hours ago`;
-  }
-
-  return "Today";
+function productDescription(product: MotorbikeProduct) {
+  return product.notes || "A well-kept motorbike ready for confident everyday riding.";
 }
 
-function parseAmount(value: unknown) {
-  const numeric = Number(String(value ?? 0).replace(/[^\d.-]/g, ""));
-  return Number.isFinite(numeric) ? numeric : 0;
+function isAvailable(product: MotorbikeProduct) {
+  return product.status === "available";
 }
 
-function pickLatestTimestamp(row: any) {
+function shelfTitle(product: MotorbikeProduct) {
+  const bikeType = product.model_detail?.bike_type?.toLowerCase() ?? "";
+  if (bikeType.includes("semi")) return "Semi-automatic picks";
+  if (bikeType.includes("manual")) return "Manual performance";
+  if (bikeType.includes("automatic") || bikeType.includes("scooter")) return "Automatic favorites";
+  return "Featured bikes";
+}
+
+function shelfSubtitle(title: string) {
+  if (title.includes("Automatic"))
+    return "Effortless city rides, clean handling, and daily comfort.";
+  if (title.includes("Semi")) return "Balanced control for work, delivery, and everyday movement.";
+  if (title.includes("Manual")) return "Responsive machines for riders who want full command.";
+  return "Curated stock selected from the Motorbuy inventory.";
+}
+
+function imageForProduct(product: DisplayProduct, index = 0) {
+  if (product.image) {
+    if (/^https?:\/\//i.test(product.image)) return product.image;
+    const origin = BASE_URL.replace(/\/api$/, "");
+    return `${origin}${product.image.startsWith("/") ? product.image : `/${product.image}`}`;
+  }
+  const stableIndex = Math.abs(product.id + index) % bikeImages.length;
+  return bikeImages[stableIndex];
+}
+
+function ShopHomePage() {
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const [search, setSearch] = useState("");
+  const productsQ = useQuery({
+    queryKey: ["shop", "products"],
+    queryFn: getShopProducts,
+    enabled: typeof window !== "undefined",
+  });
+
+  const allProducts = ((productsQ.data ?? []) as DisplayProduct[]).length
+    ? ((productsQ.data ?? []) as DisplayProduct[])
+    : demoProducts;
+
+  const products = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return allProducts;
+
+    return allProducts.filter((product) => {
+      const haystack = [
+        productName(product),
+        product.color,
+        product.year,
+        product.model_detail?.bike_type,
+        product.model_detail?.engine_cc,
+        productDescription(product),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [allProducts, search]);
+
+  const shelves = useMemo<ProductShelf[]>(() => {
+    const order = [
+      "Automatic favorites",
+      "Semi-automatic picks",
+      "Manual performance",
+      "Featured bikes",
+    ];
+    const grouped = new Map<string, DisplayProduct[]>();
+
+    for (const product of products) {
+      const title = shelfTitle(product);
+      grouped.set(title, [...(grouped.get(title) ?? []), product]);
+    }
+
+    return order
+      .map((title) => ({
+        title,
+        subtitle: shelfSubtitle(title),
+        products: grouped.get(title) ?? [],
+      }))
+      .filter((shelf) => shelf.products.length > 0);
+  }, [products]);
+
+  const availableCount = products.filter(isAvailable).length;
+
+  function viewDetails(id: number) {
+    navigate({ to: "/purchase/$id", params: { id: String(id) } });
+  }
+
+  function buyNow(id: number) {
+    if (!auth.isAuthenticated) {
+      navigate({ to: "/login", search: { next: `/purchase/${id}` } });
+      return;
+    }
+
+    if (auth.isAdmin) {
+      alert("Admins cannot make purchases");
+      return;
+    }
+
+    viewDetails(id);
+  }
+
   return (
-    row?.created_at ||
-    row?.updated_at ||
-    row?.sale_date ||
-    row?.payment_date ||
-    row?.received_date ||
-    row?.completed_date ||
-    row?.follow_up_date ||
-    null
+    <div className="min-h-screen bg-[#f4f1ec] text-[#101418]">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+          <Link to="/" className="flex min-w-fit items-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#f97316] text-white shadow-lg shadow-orange-500/25">
+              <Bike className="h-5 w-5" />
+            </span>
+            <span className="text-xl font-black tracking-tight">MOTORBUY</span>
+          </Link>
+
+          <nav className="hidden items-center gap-1 text-sm font-semibold lg:flex">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/">Home</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to={auth.isAdmin ? "/inventory" : "/login"}>Inventory</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to={auth.isAdmin ? "/sales" : "/login"}>Sales</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to={auth.isAdmin ? "/reports" : "/login"}>Reports</Link>
+            </Button>
+          </nav>
+
+          <div className="relative order-last w-full md:order-none md:ml-auto md:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search brand, model, engine..."
+              className="h-11 w-full rounded-full border border-black/10 bg-white/90 pl-10 pr-4 text-sm outline-none ring-orange-500/20 transition focus:ring-4"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2 md:ml-0">
+            {auth.isAuthenticated ? (
+              <>
+                {auth.isAdmin ? (
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link to="/admin-dashboard">Admin</Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm" className="rounded-full">
+                    <Link to="/orders">My Orders</Link>
+                  </Button>
+                )}
+                <Button size="sm" className="rounded-full" onClick={auth.logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm" className="rounded-full">
+                  <Link to="/login">
+                    <UserRound className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-full bg-[#f97316] text-white hover:bg-[#ea580c]"
+                >
+                  <Link to="/register">Register</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <HeroSection
+          availableCount={availableCount}
+          onBrowse={() =>
+            document.getElementById("featured-bikes")?.scrollIntoView({ behavior: "smooth" })
+          }
+        />
+
+        <section id="featured-bikes" className="mx-auto max-w-7xl space-y-12 px-4 py-14">
+          <SectionHeading
+            eyebrow="Featured bikes"
+            title="Curated machines, ready when you are"
+            text="Only three cards are visible on desktop so every bike feels deliberate, premium, and easy to compare."
+          />
+
+          {productsQ.isLoading ? (
+            <LoadingShelves />
+          ) : productsQ.isError ? (
+            <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
+              Failed to load motorbikes. Make sure the backend is running.
+            </div>
+          ) : shelves.length === 0 ? (
+            <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
+              No matching motorbikes found.
+            </div>
+          ) : (
+            shelves.map((shelf) => (
+              <MotorbikeShelf
+                key={shelf.title}
+                shelf={shelf}
+                onDetails={viewDetails}
+                onPurchase={buyNow}
+              />
+            ))
+          )}
+        </section>
+
+        <CategoriesSection />
+        <WhyChooseUsSection />
+        <TestimonialsSection />
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 
-function HomePage() {
-  useAuthRedirect();
-  const { user } = useCurrentUser();
+function HeroSection({
+  availableCount,
+  onBrowse,
+}: {
+  availableCount: number;
+  onBrowse: () => void;
+}) {
+  return (
+    <section className="relative min-h-[620px] overflow-hidden">
+      <img
+        src={heroImage}
+        alt="Premium motorcycle on the road"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/15" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f4f1ec] to-transparent" />
 
-  const dashboardQ = useDashboard();
-  const salesReportQ = useSalesReport();
-  const followUpsQ = useLeads("?follow_up_date=today");
-  const salesQ = useSales();
-  const paymentsQ = usePayments();
-  const serviceQ = useServiceRecords();
-
-  const isLoading =
-    dashboardQ.isLoading ||
-    salesReportQ.isLoading ||
-    followUpsQ.isLoading ||
-    salesQ.isLoading ||
-    paymentsQ.isLoading ||
-    serviceQ.isLoading;
-
-  const dashboardData = dashboardQ.data;
-  const salesReport = salesReportQ.data;
-
-  const chartData = (salesReport?.monthly_sales || []).map((item: any) => ({
-    month: item.month,
-    sales: parseAmount(item.total_revenue),
-  }));
-
-  const stats = dashboardData
-    ? [
-        { label: "Total Bikes in Stock", value: dashboardData.total_bikes_in_stock, icon: Bike },
-        { label: "Total Customers", value: dashboardData.total_customers, icon: Users },
-        {
-          label: "Sales This Month",
-          value: dashboardData.total_sales_this_month,
-          icon: TrendingUp,
-        },
-        {
-          label: "Revenue This Month",
-          value: formatTsh(dashboardData.revenue_this_month),
-          icon: CreditCard,
-        },
-        { label: "Active Loans", value: dashboardData.active_loans, icon: ShieldCheck },
-        { label: "Pending Services", value: dashboardData.pending_services, icon: Wrench },
-        { label: "Active Campaigns", value: dashboardData.active_campaigns, icon: Megaphone },
-        { label: "Total Leads", value: dashboardData.total_leads, icon: BriefcaseBusiness },
-      ]
-    : [];
-
-  const salesList = getResults<any>(salesQ.data);
-  const followUpList = getResults<any>(followUpsQ.data);
-  const paymentList = getResults<any>(paymentsQ.data);
-  const serviceList = getResults<any>(serviceQ.data);
-
-  const salesRows = salesList
-    .slice()
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.sale_date || 0).getTime() - new Date(a.sale_date || 0).getTime(),
-    )
-    .slice(0, 5);
-
-  const followUpRows = followUpList.slice(0, 5);
-
-  const activityItems = [
-    ...salesList.slice(0, 2).map((sale: any) => ({
-      label: `Sale recorded for ${sale.customer_name || "customer"}`,
-      detail: `${sale.motorbike_name || sale.motorbike || "motorbike"}`,
-      time: formatActivityTime(pickLatestTimestamp(sale)),
-      icon: ShieldCheck,
-      timestamp: pickLatestTimestamp(sale),
-    })),
-    ...followUpList.slice(0, 1).map((lead: any) => ({
-      label: `New lead added`,
-      detail: lead.customer_name || "Customer",
-      time: formatActivityTime(pickLatestTimestamp(lead)),
-      icon: UserRound,
-      timestamp: pickLatestTimestamp(lead),
-    })),
-    ...paymentList.slice(0, 1).map((payment: any) => ({
-      label: "Payment received",
-      detail: formatTsh(payment.amount),
-      time: formatActivityTime(pickLatestTimestamp(payment)),
-      icon: CreditCard,
-      timestamp: pickLatestTimestamp(payment),
-    })),
-    ...serviceList.slice(0, 1).map((record: any) => ({
-      label: "Service request opened",
-      detail: record.customer_name || "Customer",
-      time: formatActivityTime(pickLatestTimestamp(record)),
-      icon: Wrench,
-      timestamp: pickLatestTimestamp(record),
-    })),
-  ]
-    .sort(
-      (a: any, b: any) =>
-        new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime(),
-    )
-    .slice(0, 5);
-
-  if (dashboardQ.isError) {
-    return (
-      <RouteGuard
-        allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}
-      >
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full bg-[#0f172a] font-[Inter,sans-serif] text-slate-100">
-            <AppSidebar />
-            <div className="flex min-h-screen flex-1 flex-col">
-              <main className="flex flex-1 items-center justify-center px-4 py-8">
-                <Card className="w-full max-w-xl border-white/10 bg-[#1e293b] text-slate-100 shadow-xl shadow-black/20">
-                  <CardContent className="p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-300">
-                      <ShieldAlert className="h-7 w-7" />
-                    </div>
-                    <h1 className="text-2xl font-semibold text-white">
-                      Failed to load dashboard data
-                    </h1>
-                    <p className="mt-2 text-sm text-slate-400">
-                      The live API request did not return dashboard metrics.
-                    </p>
-                    <Button
-                      onClick={() => dashboardQ.refetch()}
-                      className="mt-6 h-11 rounded-xl bg-[#f97316] px-5 text-sm font-semibold text-white hover:bg-[#ea6a0a]"
-                    >
-                      Retry
-                    </Button>
-                  </CardContent>
-                </Card>
-              </main>
-            </div>
+      <div className="relative mx-auto grid min-h-[620px] max-w-7xl items-center px-4 py-20">
+        <div className="max-w-3xl animate-fade-in text-white">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur">
+            <Star className="h-4 w-4 fill-[#f97316] text-[#f97316]" />
+            Premium motorbike marketplace
           </div>
-        </SidebarProvider>
-      </RouteGuard>
-    );
+          <h1 className="text-5xl font-black leading-tight tracking-tight md:text-7xl">
+            Own the ride that moves your ambition.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/80">
+            Discover verified bikes, compare clean inventory, and reserve your next machine through
+            a smooth buying experience built for serious riders.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button
+              size="lg"
+              className="rounded-full bg-[#f97316] px-7 text-white shadow-xl shadow-orange-500/25 hover:bg-[#ea580c]"
+              onClick={onBrowse}
+            >
+              <ShoppingBag className="mr-2 h-5 w-5" />
+              Explore bikes
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full border-white/30 bg-white/10 px-7 text-white backdrop-blur hover:bg-white hover:text-slate-950"
+              onClick={onBrowse}
+            >
+              View collection
+            </Button>
+          </div>
+          <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
+            <HeroStat label="Bikes listed" value={`${availableCount}+`} />
+            <HeroStat label="Categories" value="3" />
+            <HeroStat label="Checkout" value="Secure" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+      <div className="text-2xl font-black">{value}</div>
+      <div className="mt-1 text-xs uppercase tracking-wide text-white/60">{label}</div>
+    </div>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  text,
+}: {
+  eyebrow: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="max-w-3xl">
+      <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f97316]">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-black tracking-tight md:text-5xl">{title}</h2>
+      <p className="mt-4 text-base leading-7 text-slate-600">{text}</p>
+    </div>
+  );
+}
+
+function LoadingShelves() {
+  return (
+    <div className="space-y-10">
+      {["Automatic favorites", "Semi-automatic picks", "Manual performance"].map((title) => (
+        <section key={title}>
+          <h3 className="mb-4 text-2xl font-black">{title}</h3>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="h-[430px] animate-pulse rounded-3xl bg-white shadow-sm" />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function MotorbikeShelf({
+  shelf,
+  onDetails,
+  onPurchase,
+}: {
+  shelf: ProductShelf;
+  onDetails: (id: number) => void;
+  onPurchase: (id: number) => void;
+}) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  function scroll(direction: "left" | "right") {
+    const node = scrollerRef.current;
+    if (!node) return;
+    node.scrollBy({
+      left: direction === "right" ? node.clientWidth : -node.clientWidth,
+      behavior: "smooth",
+    });
   }
 
   return (
-    <RouteGuard
-      allowedRoles={["admin", "sales", "financing", "advertising", "marketing", "service"]}
-    >
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-[#0f172a] font-[Inter,sans-serif] text-slate-100">
-          <AppSidebar />
-          <div className="flex min-h-screen flex-1 flex-col">
-            <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0f172a]/95 backdrop-blur">
-              <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-center gap-3">
-                  <SidebarTrigger className="border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" />
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f97316] text-[#0f172a] shadow-lg shadow-orange-500/20">
-                      <Bike className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold tracking-[0.12em] text-[#f97316]">
-                        MOTORBIKE CRM
-                      </div>
-                      <div className="text-xs text-slate-400">Staff operations dashboard</div>
-                    </div>
-                  </div>
-                </div>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-black tracking-tight md:text-3xl">{shelf.title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{shelf.subtitle}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="mr-2 text-sm font-semibold text-slate-500">
+            {shelf.products.length} bikes
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => scroll("left")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full"
+            onClick={() => scroll("right")}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
-                <div className="flex flex-col items-start gap-2 text-left lg:items-center lg:text-center">
-                  <div className="text-xl font-semibold text-white">
-                    Welcome back, {user ? `${user.first_name} ${user.last_name}` : "Team member"}
-                  </div>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${roleBadgeClasses[user?.role || "service"]}`}
-                  >
-                    {user?.role || "service"}
-                  </span>
-                </div>
+      <div
+        ref={scrollerRef}
+        className="flex snap-x gap-5 overflow-x-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {shelf.products.map((product, index) => (
+          <MotorbikeCard
+            key={product.id}
+            product={product}
+            image={imageForProduct(product, index)}
+            onDetails={onDetails}
+            onPurchase={onPurchase}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
-                <div className="flex items-center gap-3 self-start lg:self-auto">
-                  <button
-                    type="button"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#1e293b] text-slate-200 shadow-sm transition hover:bg-[#273449]"
-                  >
-                    <Bell className="h-5 w-5" />
-                  </button>
-                  <Button
-                    onClick={() => void logout()}
-                    className="h-11 rounded-xl bg-[#f97316] px-5 text-sm font-semibold text-white hover:bg-[#ea6a0a]"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-            </header>
+function MotorbikeCard({
+  product,
+  image,
+  onDetails,
+  onPurchase,
+}: {
+  product: DisplayProduct;
+  image: string;
+  onDetails: (id: number) => void;
+  onPurchase: (id: number) => void;
+}) {
+  const available = isAvailable(product);
 
-            <main className="flex-1 px-4 py-6 sm:px-6">
-              <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-                {isLoading ? (
-                  <>
-                    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                      {Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className="animate-pulse rounded-2xl border border-white/10 bg-[#1e293b] p-4 shadow-sm shadow-black/20"
-                        >
-                          <div className="mb-4 flex items-center justify-between">
-                            <div className="h-4 w-28 rounded bg-white/10" />
-                            <div className="h-10 w-10 rounded-xl bg-white/10" />
-                          </div>
-                          <div className="h-8 w-24 rounded bg-white/10" />
-                        </div>
-                      ))}
-                    </section>
+  return (
+    <article className="group min-w-[82vw] snap-start overflow-hidden rounded-3xl border border-black/10 bg-white shadow-xl shadow-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/10 sm:min-w-[430px] lg:min-w-[calc((100%-40px)/3)] lg:basis-[calc((100%-40px)/3)]">
+      <div className="relative aspect-[16/11] overflow-hidden bg-slate-900">
+        <img
+          src={image}
+          alt={productName(product)}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+        <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black uppercase tracking-wide text-slate-950">
+          {available ? "Available" : "Not available"}
+        </div>
+        <div className="absolute bottom-4 left-4 right-4 text-white">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+            {product.model_detail?.bike_type || "Motorbike"}
+          </p>
+          <h4 className="mt-1 text-2xl font-black">{productName(product)}</h4>
+        </div>
+      </div>
 
-                    <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-                      <div className="rounded-3xl border border-white/10 bg-[#1e293b] p-5 shadow-sm shadow-black/20">
-                        <div className="h-6 w-40 rounded bg-white/10" />
-                        <div className="mt-5 h-80 rounded-2xl bg-white/5" />
-                      </div>
-                      <div className="rounded-3xl border border-white/10 bg-[#1e293b] p-5 shadow-sm shadow-black/20">
-                        <div className="h-6 w-44 rounded bg-white/10" />
-                        <div className="mt-5 space-y-3">
-                          {Array.from({ length: 5 }).map((_, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-3 rounded-2xl border border-white/8 bg-[#0f172a]/60 px-4 py-3"
-                            >
-                              <div className="h-9 w-9 rounded-full bg-white/10" />
-                              <div className="flex-1 space-y-2">
-                                <div className="h-4 w-40 rounded bg-white/10" />
-                                <div className="h-3 w-24 rounded bg-white/10" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="grid gap-6 xl:grid-cols-2">
-                      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#1e293b] shadow-sm shadow-black/20">
-                        <div className="border-b border-white/10 px-5 py-4">
-                          <div className="h-5 w-52 rounded bg-white/10" />
-                          <div className="mt-2 h-4 w-64 rounded bg-white/10" />
-                        </div>
-                        <div className="space-y-3 p-5">
-                          {Array.from({ length: 5 }).map((_, index) => (
-                            <div key={index} className="h-11 rounded-2xl bg-white/5" />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#1e293b] shadow-sm shadow-black/20">
-                        <div className="border-b border-white/10 px-5 py-4">
-                          <div className="h-5 w-40 rounded bg-white/10" />
-                          <div className="mt-2 h-4 w-72 rounded bg-white/10" />
-                        </div>
-                        <div className="space-y-3 p-5">
-                          {Array.from({ length: 5 }).map((_, index) => (
-                            <div key={index} className="h-11 rounded-2xl bg-white/5" />
-                          ))}
-                        </div>
-                      </div>
-                    </section>
-                  </>
-                ) : (
-                  <>
-                    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                      {stats.map(({ label, value, icon: Icon }) => (
-                        <div
-                          key={label}
-                          className="rounded-2xl border border-white/10 bg-[#1e293b] p-4 shadow-sm shadow-black/20"
-                        >
-                          <div className="mb-4 flex items-center justify-between">
-                            <span className="text-sm font-medium text-slate-400">{label}</span>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/15 text-[#f97316]">
-                              <Icon className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <div className="text-2xl font-semibold text-white">
-                            {typeof value === "number" ? value.toLocaleString() : value}
-                          </div>
-                        </div>
-                      ))}
-                    </section>
-
-                    <div className="px-1 text-xs text-slate-400">
-                      Last updated:{" "}
-                      {formatActivityTime(new Date(dashboardQ.dataUpdatedAt).toISOString())}
-                    </div>
-
-                    <section className="rounded-3xl border border-white/10 bg-[linear-gradient(135deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98))] p-6 shadow-xl shadow-black/20">
-                      <div className="mb-5 flex items-center justify-between gap-3">
-                        <div>
-                          <h1 className="text-2xl font-semibold text-white">Quick Access</h1>
-                          <p className="mt-1 text-sm text-slate-400">
-                            Jump into the modules your team uses every day.
-                          </p>
-                        </div>
-                        <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 md:inline-flex">
-                          Internal staff workspace
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {[
-                          {
-                            title: "Customers",
-                            description: "Manage customer profiles and leads",
-                            icon: Users,
-                            to: "/customers",
-                          },
-                          {
-                            title: "Inventory",
-                            description: "View and manage motorbike stock",
-                            icon: Bike,
-                            to: "/inventory",
-                          },
-                          {
-                            title: "Sales Pipeline",
-                            description: "Track deals from inquiry to sale",
-                            icon: TrendingUp,
-                            to: "/sales",
-                          },
-                          {
-                            title: "Financing",
-                            description: "Manage loans and installment payments",
-                            icon: CreditCard,
-                            to: "/financing",
-                          },
-                          {
-                            title: "Marketing & Advertising",
-                            description: "Campaigns, SMS and promotions",
-                            icon: Megaphone,
-                            to: "/marketing",
-                          },
-                          {
-                            title: "Service Center",
-                            description: "Manage bike maintenance requests",
-                            icon: Wrench,
-                            to: "/service",
-                          },
-                        ].map(({ title, description, icon: Icon, to }) => (
-                          <Link
-                            key={title}
-                            to={to}
-                            className="group rounded-2xl border border-white/10 bg-[#1e293b] p-5 transition hover:-translate-y-0.5 hover:border-orange-400/40 hover:bg-[#243246]"
-                          >
-                            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/15 text-[#f97316]">
-                              <Icon className="h-7 w-7" />
-                            </div>
-                            <div className="text-lg font-semibold text-white">{title}</div>
-                            <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
-                          </Link>
-                        ))}
-                      </div>
-                    </section>
-
-                    <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-                      <div className="rounded-3xl border border-white/10 bg-[#1e293b] p-5 shadow-sm shadow-black/20">
-                        <div className="mb-5 flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-[#f97316]">
-                            <BarChart3 className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h2 className="text-lg font-semibold text-white">Monthly Sales</h2>
-                            <p className="text-sm text-slate-400">
-                              Real revenue figures from the API
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="h-80">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                              <CartesianGrid stroke="rgba(148, 163, 184, 0.14)" vertical={false} />
-                              <XAxis
-                                dataKey="month"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: "#cbd5e1", fontSize: 12 }}
-                              />
-                              <YAxis
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                                tickFormatter={(value) => formatTsh(value)}
-                              />
-                              <Tooltip
-                                cursor={{ fill: "rgba(249, 115, 22, 0.08)" }}
-                                contentStyle={{
-                                  backgroundColor: "#0f172a",
-                                  border: "1px solid rgba(255,255,255,0.08)",
-                                  borderRadius: "16px",
-                                  color: "#f8fafc",
-                                }}
-                                formatter={(value: number) => [formatTsh(value), "Revenue"]}
-                              />
-                              <Bar
-                                dataKey="sales"
-                                fill="#f97316"
-                                radius={[10, 10, 0, 0]}
-                                maxBarSize={46}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-white/10 bg-[#1e293b] p-5 shadow-sm shadow-black/20">
-                        <div className="mb-5 flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-[#f97316]">
-                            <BriefcaseBusiness className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-                            <p className="text-sm text-slate-400">
-                              Latest actions across the dealership
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          {activityItems.length ? (
-                            activityItems.map((item) => {
-                              const Icon = item.icon;
-                              return (
-                                <div
-                                  key={`${item.label}-${item.detail}-${item.time}`}
-                                  className="flex items-start gap-3 rounded-2xl border border-white/8 bg-[#0f172a]/60 px-4 py-3"
-                                >
-                                  <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-orange-500/15 text-[#f97316]">
-                                    <Icon className="h-4 w-4" />
-                                  </div>
-                                  <div className="text-sm leading-6 text-slate-200">
-                                    <div>
-                                      {item.label}
-                                      {item.detail ? ` — ${item.detail}` : ""}
-                                    </div>
-                                    <div className="text-xs text-slate-400">{item.time}</div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
-                              No recent activity found.
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="grid gap-6 xl:grid-cols-2">
-                      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#1e293b] shadow-sm shadow-black/20">
-                        <div className="border-b border-white/10 px-5 py-4">
-                          <h2 className="text-lg font-semibold text-white">
-                            Today&apos;s Follow-ups
-                          </h2>
-                          <p className="mt-1 text-sm text-slate-400">
-                            Priority contacts that need action today
-                          </p>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full text-left text-sm">
-                            <thead className="bg-white/5 text-slate-400">
-                              <tr>
-                                <th className="px-5 py-3 font-medium">Customer Name</th>
-                                <th className="px-5 py-3 font-medium">Phone</th>
-                                <th className="px-5 py-3 font-medium">Stage</th>
-                                <th className="px-5 py-3 font-medium">Assigned To</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {followUpRows.length ? (
-                                followUpRows.map((row: any, index: number) => (
-                                  <tr
-                                    key={
-                                      row.id ??
-                                      `${row.customer_name}-${row.customer_phone}-${index}`
-                                    }
-                                    className={index % 2 === 0 ? "bg-[#1e293b]" : "bg-[#233047]"}
-                                  >
-                                    <td className="px-5 py-4 font-medium text-white">
-                                      {row.customer_name}
-                                    </td>
-                                    <td className="px-5 py-4 text-slate-300">
-                                      {row.customer_phone}
-                                    </td>
-                                    <td className="px-5 py-4">
-                                      <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs font-medium text-orange-300">
-                                        {row.stage}
-                                      </span>
-                                    </td>
-                                    <td className="px-5 py-4 text-slate-300">
-                                      {row.assigned_to_name || row.assigned_to || "Unassigned"}
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td className="px-5 py-6 text-slate-400" colSpan={4}>
-                                    No follow-ups scheduled for today
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#1e293b] shadow-sm shadow-black/20">
-                        <div className="border-b border-white/10 px-5 py-4">
-                          <h2 className="text-lg font-semibold text-white">Recent Sales</h2>
-                          <p className="mt-1 text-sm text-slate-400">
-                            Latest completed dealership transactions
-                          </p>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full text-left text-sm">
-                            <thead className="bg-white/5 text-slate-400">
-                              <tr>
-                                <th className="px-5 py-3 font-medium">Customer</th>
-                                <th className="px-5 py-3 font-medium">Bike</th>
-                                <th className="px-5 py-3 font-medium">Amount</th>
-                                <th className="px-5 py-3 font-medium">Salesperson</th>
-                                <th className="px-5 py-3 font-medium">Date</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {salesRows.length ? (
-                                salesRows.map((row: any, index: number) => (
-                                  <tr
-                                    key={row.id ?? `${row.customer_name}-${index}`}
-                                    className={index % 2 === 0 ? "bg-[#1e293b]" : "bg-[#233047]"}
-                                  >
-                                    <td className="px-5 py-4 font-medium text-white">
-                                      {row.customer_name}
-                                    </td>
-                                    <td className="px-5 py-4 text-slate-300">
-                                      {row.motorbike_name || row.motorbike}
-                                    </td>
-                                    <td className="px-5 py-4 font-semibold text-orange-300">
-                                      {formatTsh(row.sale_price)}
-                                    </td>
-                                    <td className="px-5 py-4 text-slate-300">
-                                      {row.salesperson_name}
-                                    </td>
-                                    <td className="px-5 py-4 text-slate-300">{row.sale_date}</td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr>
-                                  <td className="px-5 py-6 text-slate-400" colSpan={5}>
-                                    No sales recorded yet
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </section>
-                  </>
-                )}
-              </div>
-            </main>
+      <div className="grid gap-5 p-5">
+        <div className="grid grid-cols-3 gap-2 text-sm">
+          <Spec icon={Gauge} label={`${product.model_detail?.engine_cc || "N/A"}cc`} />
+          <Spec icon={Zap} label={product.year ? String(product.year) : "N/A"} />
+          <Spec icon={Bike} label={product.color || "N/A"} />
+        </div>
+        <p className="line-clamp-2 min-h-12 text-sm leading-6 text-slate-600">
+          {productDescription(product)}
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">From</p>
+            <p className="text-2xl font-black text-slate-950">{formatCurrency(product.price)}</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => onDetails(product.id)}
+            >
+              View Details
+            </Button>
+            <Button
+              className="rounded-full bg-[#f97316] text-white hover:bg-[#ea580c]"
+              disabled={product.isDemo || !available}
+              onClick={() => onPurchase(product.id)}
+            >
+              {available ? "Buy Now" : "Not available"}
+            </Button>
           </div>
         </div>
-      </SidebarProvider>
-    </RouteGuard>
+      </div>
+    </article>
+  );
+}
+
+function Spec({
+  icon: Icon,
+  label,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-2xl bg-slate-100 px-3 py-2 font-semibold text-slate-700">
+      <Icon className="h-4 w-4 text-[#f97316]" />
+      <span className="truncate capitalize">{label}</span>
+    </div>
+  );
+}
+
+function CategoriesSection() {
+  const categories = [
+    { title: "Automatic", text: "Smooth rides for daily city movement.", icon: Zap },
+    { title: "Semi-automatic", text: "Practical machines for work and errands.", icon: Truck },
+    { title: "Manual", text: "Full control for confident road riders.", icon: Gauge },
+  ];
+
+  return (
+    <section className="bg-white py-16">
+      <div className="mx-auto max-w-7xl px-4">
+        <SectionHeading
+          eyebrow="Categories"
+          title="Choose by the way you ride"
+          text="Whether you need comfort, utility, or performance, Motorbuy keeps every category clear and easy to compare."
+        />
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          {categories.map((category) => (
+            <div
+              key={category.title}
+              className="rounded-3xl border bg-[#f8fafc] p-6 transition hover:-translate-y-1 hover:shadow-xl"
+            >
+              <category.icon className="h-8 w-8 text-[#f97316]" />
+              <h3 className="mt-5 text-2xl font-black">{category.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{category.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WhyChooseUsSection() {
+  const items = [
+    {
+      icon: ShieldCheck,
+      title: "Verified inventory",
+      text: "Every listing connects directly to dealership stock records.",
+    },
+    {
+      icon: Wallet,
+      title: "Flexible payment paths",
+      text: "Choose cash, bank transfer, installment, or supported mobile payment flows.",
+    },
+    {
+      icon: Truck,
+      title: "Order tracking",
+      text: "Customers can follow their purchases while the CRM keeps staff aligned.",
+    },
+  ];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16">
+      <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <SectionHeading
+          eyebrow="Why Motorbuy"
+          title="A polished buying journey connected to your dealership CRM"
+          text="The shop is designed for customers, while every order, customer, and stock movement remains visible to your internal team."
+        />
+        <div className="grid gap-4">
+          {items.map((item) => (
+            <div
+              key={item.title}
+              className="flex gap-4 rounded-3xl bg-white p-5 shadow-lg shadow-black/5"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-[#f97316]">
+                <item.icon className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-black">{item.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{item.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialsSection() {
+  const reviews = [
+    {
+      name: "Amina K.",
+      text: "The bike options were clear, the pricing was visible, and checkout felt simple.",
+      rating: "5.0",
+    },
+    {
+      name: "Brian M.",
+      text: "I could compare bikes quickly and choose the one that matched my budget.",
+      rating: "4.9",
+    },
+    {
+      name: "Collins T.",
+      text: "It feels like a real premium marketplace, not a basic inventory page.",
+      rating: "5.0",
+    },
+  ];
+
+  return (
+    <section className="bg-[#101418] py-16 text-white">
+      <div className="mx-auto max-w-7xl px-4">
+        <SectionHeading
+          eyebrow="Reviews"
+          title="Built to earn rider confidence"
+          text="A clean buying experience helps customers trust the products before they ever visit the showroom."
+        />
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          {reviews.map((review) => (
+            <div
+              key={review.name}
+              className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur"
+            >
+              <div className="flex items-center gap-1 text-[#f97316]">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star key={index} className="h-4 w-4 fill-current" />
+                ))}
+              </div>
+              <p className="mt-5 leading-7 text-white/80">"{review.text}"</p>
+              <div className="mt-6 flex items-center justify-between">
+                <span className="font-black">{review.name}</span>
+                <span className="text-sm font-semibold text-white/60">{review.rating}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="bg-white py-12">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_1.2fr]">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#f97316] text-white">
+              <Bike className="h-5 w-5" />
+            </span>
+            <span className="text-xl font-black">MOTORBUY</span>
+          </div>
+          <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
+            Premium motorbike marketplace connected to dealership operations, customer orders, and
+            inventory visibility.
+          </p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <FooterColumn
+            title="Contact"
+            items={[
+              ["Nairobi, Kenya", MapPin],
+              ["+254 700 000 000", Phone],
+              ["sales@motorbuy.co", Mail],
+            ]}
+          />
+          <FooterColumn
+            title="Company"
+            items={[
+              ["Inventory", Bike],
+              ["Payments", Wallet],
+              ["Delivery", Truck],
+            ]}
+          />
+          <div>
+            <h3 className="font-black">Social</h3>
+            <div className="mt-4 flex gap-2">
+              {[Facebook, Instagram, Linkedin].map((Icon, index) => (
+                <a
+                  key={index}
+                  href="#"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border text-slate-700 transition hover:border-[#f97316] hover:text-[#f97316]"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function FooterColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<[string, React.ComponentType<{ className?: string }>]>;
+}) {
+  return (
+    <div>
+      <h3 className="font-black">{title}</h3>
+      <div className="mt-4 grid gap-3">
+        {items.map(([label, Icon]) => (
+          <div key={label} className="flex items-center gap-2 text-sm text-slate-600">
+            <Icon className="h-4 w-4 text-[#f97316]" />
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

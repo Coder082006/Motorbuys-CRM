@@ -14,6 +14,7 @@ import { Route as ServiceRouteImport } from './routes/service'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MarketingRouteImport } from './routes/marketing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -21,7 +22,9 @@ import { Route as FinancingRouteImport } from './routes/financing'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as AdvertisingRouteImport } from './routes/advertising'
+import { Route as AdminDashboardRouteImport } from './routes/admin-dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PurchaseIdRouteImport } from './routes/purchase.$id'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -46,6 +49,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingRoute = MarketingRouteImport.update({
@@ -83,14 +91,25 @@ const AdvertisingRoute = AdvertisingRouteImport.update({
   path: '/advertising',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin-dashboard',
+  path: '/admin-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchaseIdRoute = PurchaseIdRouteImport.update({
+  id: '/purchase/$id',
+  path: '/purchase/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
   '/customers': typeof CustomersRoute
   '/dashboard': typeof DashboardRoute
@@ -98,14 +117,17 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
   '/customers': typeof CustomersRoute
   '/dashboard': typeof DashboardRoute
@@ -113,15 +135,18 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
   '/customers': typeof CustomersRoute
   '/dashboard': typeof DashboardRoute
@@ -129,16 +154,19 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-dashboard'
     | '/advertising'
     | '/customers'
     | '/dashboard'
@@ -146,14 +174,17 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/orders'
     | '/register'
     | '/reports'
     | '/sales'
     | '/service'
     | '/users'
+    | '/purchase/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-dashboard'
     | '/advertising'
     | '/customers'
     | '/dashboard'
@@ -161,14 +192,17 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/orders'
     | '/register'
     | '/reports'
     | '/sales'
     | '/service'
     | '/users'
+    | '/purchase/$id'
   id:
     | '__root__'
     | '/'
+    | '/admin-dashboard'
     | '/advertising'
     | '/customers'
     | '/dashboard'
@@ -176,15 +210,18 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/orders'
     | '/register'
     | '/reports'
     | '/sales'
     | '/service'
     | '/users'
+    | '/purchase/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
   AdvertisingRoute: typeof AdvertisingRoute
   CustomersRoute: typeof CustomersRoute
   DashboardRoute: typeof DashboardRoute
@@ -192,11 +229,13 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LoginRoute: typeof LoginRoute
   MarketingRoute: typeof MarketingRoute
+  OrdersRoute: typeof OrdersRoute
   RegisterRoute: typeof RegisterRoute
   ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
   ServiceRoute: typeof ServiceRoute
   UsersRoute: typeof UsersRoute
+  PurchaseIdRoute: typeof PurchaseIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -234,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing': {
@@ -285,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdvertisingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-dashboard': {
+      id: '/admin-dashboard'
+      path: '/admin-dashboard'
+      fullPath: '/admin-dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -292,11 +345,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/purchase/$id': {
+      id: '/purchase/$id'
+      path: '/purchase/$id'
+      fullPath: '/purchase/$id'
+      preLoaderRoute: typeof PurchaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
   AdvertisingRoute: AdvertisingRoute,
   CustomersRoute: CustomersRoute,
   DashboardRoute: DashboardRoute,
@@ -304,11 +365,13 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LoginRoute: LoginRoute,
   MarketingRoute: MarketingRoute,
+  OrdersRoute: OrdersRoute,
   RegisterRoute: RegisterRoute,
   ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,
   ServiceRoute: ServiceRoute,
   UsersRoute: UsersRoute,
+  PurchaseIdRoute: PurchaseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

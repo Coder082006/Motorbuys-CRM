@@ -47,20 +47,20 @@ const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "user";
 
 function getStoredToken(key: string): string | null {
-  return typeof window === "undefined" ? null : window.localStorage.getItem(key);
+  return typeof window === "undefined" ? null : window.sessionStorage.getItem(key);
 }
 
 function setStoredToken(key: string, value: string): void {
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(key, value);
+    window.sessionStorage.setItem(key, value);
   }
 }
 
 export function clearAuthStorage(): void {
   if (typeof window !== "undefined") {
-    window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-    window.localStorage.removeItem(USER_KEY);
+    window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    window.sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    window.sessionStorage.removeItem(USER_KEY);
   }
 }
 
@@ -110,7 +110,10 @@ function extractFieldErrors(payload: DrfErrorPayload): Record<string, string> {
     } else if (typeof value === "string") {
       acc[field] = value;
     } else if (value && typeof value === "object") {
-      acc[field] = Object.values(value as Record<string, unknown>).flat().map(String).join(" ");
+      acc[field] = Object.values(value as Record<string, unknown>)
+        .flat()
+        .map(String)
+        .join(" ");
     }
 
     return acc;
@@ -202,10 +205,7 @@ export function getResults<T>(payload: PaginatedResponse<T> | T[] | null | undef
   return payload?.results ?? [];
 }
 
-async function apiClient<T = any>(
-  endpoint: string,
-  options: ApiClientOptions = {},
-): Promise<T> {
+async function apiClient<T = any>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
   const accessToken = getStoredToken(ACCESS_TOKEN_KEY);
   const { skipAuthRefresh, ...fetchOptions } = options;
 

@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import apiClient from "../lib/api/client";
@@ -50,7 +51,9 @@ import apiClient from "../lib/api/client";
 export const Route = createFileRoute("/reports")({
   component: () => (
     <RouteGuard allowedRoles={["admin"]}>
-      <Reports />
+      <DashboardLayout>
+        <Reports />
+      </DashboardLayout>
     </RouteGuard>
   ),
   head: () => ({ meta: [{ title: "Reports & Analytics - Motorbike CRM" }] }),
@@ -299,8 +302,8 @@ function Reports() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reports & Analytics</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -308,13 +311,13 @@ function Reports() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {(["week", "month", "year", "custom"] as RangeKey[]).map((item) => (
             <Button
               key={item}
               variant={range === item ? "default" : "outline"}
               onClick={() => setRange(item)}
-              className="gap-2"
+              className="justify-center gap-2"
             >
               <CalendarRange className="h-4 w-4" />
               {item === "week"
@@ -332,7 +335,7 @@ function Reports() {
       <Accordion
         type="multiple"
         defaultValue={["sales", "inventory", "financing", "advertising", "marketing"]}
-        className="space-y-4"
+        className="space-y-3"
       >
         <ReportSection
           value="sales"
@@ -342,12 +345,12 @@ function Reports() {
           isError={salesReportQ.isError}
           onRetry={() => salesReportQ.refetch()}
         >
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Monthly Revenue</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {salesReport.monthly_sales?.length ? (
                   <ResponsiveContainer>
                     <BarChart
@@ -373,7 +376,7 @@ function Reports() {
               <CardHeader>
                 <CardTitle className="text-sm">Sales by Payment Method</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {salesReport.sales_by_payment_method?.length ? (
                   <ResponsiveContainer>
                     <PieChart>
@@ -453,12 +456,12 @@ function Reports() {
           isError={inventoryReportQ.isError}
           onRetry={() => inventoryReportQ.refetch()}
         >
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Stock Status</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {inventoryReport.stock_summary?.length ? (
                   <ResponsiveContainer>
                     <PieChart>
@@ -489,7 +492,7 @@ function Reports() {
               <CardHeader>
                 <CardTitle className="text-sm">Stock By Brand</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {inventoryReport.stock_by_brand?.length ? (
                   <ResponsiveContainer>
                     <BarChart data={inventoryReport.stock_by_brand}>
@@ -555,12 +558,30 @@ function Reports() {
           isError={financingReportQ.isError}
           onRetry={() => financingReportQ.refetch()}
         >
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
+            <MetricCard
+              title="Total Loan Amount"
+              value={formatTsh(financingReport.total_loan_amount)}
+              icon={BadgeDollarSign}
+            />
+            <MetricCard
+              title="Total Collected"
+              value={formatTsh(financingReport.total_collected)}
+              icon={TrendingUp}
+            />
+            <MetricCard
+              title="Total Pending"
+              value={formatTsh(financingReport.total_pending)}
+              icon={ShieldAlert}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Loan Status</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {financingReport.loans_summary?.length ? (
                   <ResponsiveContainer>
                     <PieChart>
@@ -591,7 +612,7 @@ function Reports() {
               <CardHeader>
                 <CardTitle className="text-sm">Monthly Collections</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {financingReport.monthly_collections?.length ? (
                   <ResponsiveContainer>
                     <BarChart
@@ -615,23 +636,6 @@ function Reports() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <MetricCard
-                title="Total Loan Amount"
-                value={formatTsh(financingReport.total_loan_amount)}
-                icon={BadgeDollarSign}
-              />
-              <MetricCard
-                title="Total Collected"
-                value={formatTsh(financingReport.total_collected)}
-                icon={TrendingUp}
-              />
-              <MetricCard
-                title="Total Pending"
-                value={formatTsh(financingReport.total_pending)}
-                icon={ShieldAlert}
-              />
-            </div>
           </div>
 
           <Card className="mt-4">
@@ -669,7 +673,7 @@ function Reports() {
               <CardHeader>
                 <CardTitle className="text-sm">Campaigns By Platform</CardTitle>
               </CardHeader>
-              <CardContent className="h-60">
+              <CardContent className="h-72">
                 {advertisingReport.campaigns_by_platform?.length ? (
                   <ResponsiveContainer>
                     <BarChart data={advertisingReport.campaigns_by_platform}>
@@ -881,11 +885,11 @@ function ReportSection({
   return (
     <AccordionItem
       value={value}
-      className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
+      className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
     >
-      <AccordionTrigger className="px-5 py-4 hover:no-underline">
+      <AccordionTrigger className="px-4 py-4 hover:no-underline sm:px-5">
         <span className="flex items-center gap-3 text-left">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-500/15 text-[#f97316]">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/15 text-[#f97316]">
             <Icon className="h-5 w-5" />
           </span>
           <span>
@@ -896,12 +900,12 @@ function ReportSection({
           </span>
         </span>
       </AccordionTrigger>
-      <AccordionContent className="px-5 pb-5">
+      <AccordionContent className="px-4 pb-5 sm:px-5">
         {isLoading ? (
           <SectionSkeleton />
         ) : isError ? (
           <Card>
-            <CardContent className="flex items-center gap-4 p-6">
+            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
               <AlertTriangle className="h-5 w-5 text-rose-600" />
               <div className="flex-1">
                 <div className="font-semibold">Failed to load {title.toLowerCase()}</div>
@@ -971,13 +975,13 @@ function MetricCard({
   icon: LucideIcon;
 }) {
   return (
-    <Card>
-      <CardContent className="p-5">
+    <Card className="h-full">
+      <CardContent className="flex h-full min-h-28 flex-col justify-between p-5">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">{title}</p>
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <p className="text-xs uppercase leading-5 text-muted-foreground">{title}</p>
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
         </div>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="break-words text-2xl font-bold leading-tight">{value}</p>
       </CardContent>
     </Card>
   );

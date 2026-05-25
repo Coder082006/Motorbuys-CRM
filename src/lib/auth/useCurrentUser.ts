@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 
-export type UserRole = "admin" | "sales" | "financing" | "advertising" | "marketing" | "service";
+export type UserRole =
+  | "admin"
+  | "sales"
+  | "financing"
+  | "advertising"
+  | "marketing"
+  | "service"
+  | "customer";
 
 export interface User {
   id: number;
@@ -9,6 +16,8 @@ export interface User {
   first_name: string;
   last_name: string;
   role: UserRole;
+  name?: string;
+  is_staff?: boolean;
   phone: string | null;
   profile_picture: string | null;
   is_active: boolean;
@@ -24,6 +33,7 @@ type CurrentUserState = {
   isAdvertising: boolean;
   isMarketing: boolean;
   isService: boolean;
+  isCustomer: boolean;
   isLoggedIn: boolean;
 };
 
@@ -32,7 +42,7 @@ function readStoredUser(): User | null {
     return null;
   }
 
-  const rawUser = window.localStorage.getItem("user");
+  const rawUser = window.sessionStorage.getItem("user");
   if (!rawUser) {
     return null;
   }
@@ -71,6 +81,7 @@ export function useCurrentUser(): CurrentUserState {
     isAdvertising: role === "advertising",
     isMarketing: role === "marketing",
     isService: role === "service",
+    isCustomer: role === "customer" || user?.is_staff === false,
     isLoggedIn: Boolean(user),
   };
 }

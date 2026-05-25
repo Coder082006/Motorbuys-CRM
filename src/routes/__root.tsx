@@ -4,13 +4,10 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useNavigate,
-  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { isLoggedIn } from "../lib/api/auth";
+import { AuthProvider } from "../context/AuthContext";
 
 import appCss from "../styles.css?url";
 
@@ -128,60 +125,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const navigate = useNavigate();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [authChecked, setAuthChecked] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const isPublicPath = pathname === "/login" || pathname === "/register";
-
-  useEffect(() => {
-    let active = true;
-
-    const checkAccess = async () => {
-      const authenticated = await isLoggedIn();
-
-      if (!active) {
-        return;
-      }
-
-      setLoggedIn(authenticated);
-      setAuthChecked(true);
-
-      if (!authenticated && !isPublicPath) {
-        navigate({ to: "/login" });
-      }
-
-      if (authenticated && isPublicPath) {
-        navigate({ to: "/dashboard" });
-      }
-    };
-
-    void checkAccess();
-
-    return () => {
-      active = false;
-    };
-  }, [navigate, pathname]);
-
-  if (!authChecked && !isPublicPath) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-background" />
-      </QueryClientProvider>
-    );
-  }
-
-  if (authChecked && !loggedIn && !isPublicPath) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-background" />
-      </QueryClientProvider>
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

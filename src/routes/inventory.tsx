@@ -400,7 +400,7 @@ function BikeModal({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Price (KSh)</Label>
+            <Label>Price (TSh)</Label>
             <Input
               type="number"
               value={form.price}
