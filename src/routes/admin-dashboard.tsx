@@ -144,11 +144,13 @@ function AdminDashboardContent() {
                   ) : (
                     orders.map((order) => (
                       <tr key={order.id} className="border-b last:border-0">
-                        <td className="px-4 py-3 font-medium">#{order.id}</td>
+                        <td className="px-4 py-3 font-medium">
+                          Global #{order.id} (Customer&apos;s Order #{order.customer_order_number})
+                        </td>
                         <td className="px-4 py-3">{order.customer_name || "Customer"}</td>
                         <td className="px-4 py-3">{order.phone}</td>
                         <td className="px-4 py-3">{orderMotorbikeName(order)}</td>
-                        <td className="px-4 py-3">{money(order.total_amount)}</td>
+                        <td className="px-4 py-3">{money(order.amount ?? order.total_amount)}</td>
                         <td className="px-4 py-3 capitalize">{order.status.replace("_", " ")}</td>
                         <td className="px-4 py-3">
                           {new Date(order.created_at).toLocaleDateString()}

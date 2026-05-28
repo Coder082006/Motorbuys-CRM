@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Pencil } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
-import { getResults } from "@/lib/api/client";
+import { BASE_URL, getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -59,6 +59,25 @@ const statusOptions = [
   { value: "sold", label: "Sold" },
   { value: "service", label: "In Service" },
 ];
+
+const bikeImages = [
+  "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?auto=format&fit=crop&w=900&q=80",
+];
+
+function imageForBike(bike: { id: number; image?: string | null }) {
+  if (bike.image) {
+    if (/^https?:\/\//i.test(bike.image)) return bike.image;
+    const origin = BASE_URL.replace(/\/api$/, "");
+    return `${origin}${bike.image.startsWith("/") ? bike.image : `/${bike.image}`}`;
+  }
+
+  return bikeImages[Math.abs(bike.id) % bikeImages.length];
+}
 
 function Inventory() {
   useAuthRedirect();
@@ -196,7 +215,7 @@ function Inventory() {
               <Card key={b.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
                 <div className="aspect-[4/3] bg-muted overflow-hidden">
                   <img
-                    src={b.image || "/placeholder-bike.jpg"}
+                    src={imageForBike(b)}
                     alt={`${b.model_detail?.brand} ${b.model_detail?.model_name}`}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                     loading="lazy"

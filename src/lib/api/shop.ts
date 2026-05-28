@@ -18,12 +18,16 @@ export type MotorbikeProduct = {
 
 export type ShopOrder = {
   id: number;
+  customer_order_number: number;
   motorbike: number;
   motorbike_detail?: MotorbikeProduct;
+  motorbike_name?: string;
   customer_name?: string;
   status: string;
   payment_method: string;
   total_amount: string | number;
+  amount?: string | number;
+  transaction_id?: string;
   delivery_address: string;
   delivery_city?: string;
   delivery_region?: string;
@@ -44,7 +48,7 @@ export type AdminCustomer = {
 
 export type CreateOrderPayload = {
   motorbike: number;
-  payment_method: "mpesa" | "cash" | "bank_transfer" | "installment";
+  payment_method: "mpesa" | "cash" | "bank_transfer" | "installment" | "demo";
   delivery_address: string;
   delivery_city?: string;
   delivery_region?: string;
@@ -72,6 +76,13 @@ export async function createShopOrder(payload: CreateOrderPayload) {
   return apiClient<ShopOrder>("/shop/orders/", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function completeDemoPayment(orderId: number, phone: string) {
+  return apiClient<ShopOrder>(`/shop/orders/${orderId}/complete-demo-payment/`, {
+    method: "POST",
+    body: JSON.stringify({ phone }),
   });
 }
 

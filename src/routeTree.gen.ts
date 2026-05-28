@@ -25,6 +25,8 @@ import { Route as AdvertisingRouteImport } from './routes/advertising'
 import { Route as AdminDashboardRouteImport } from './routes/admin-dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PurchaseIdRouteImport } from './routes/purchase.$id'
+import { Route as CustomersIdRouteImport } from './routes/customers.$id'
+import { Route as CustomerProfileIdRouteImport } from './routes/customer-profile.$id'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -106,12 +108,22 @@ const PurchaseIdRoute = PurchaseIdRouteImport.update({
   path: '/purchase/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomersIdRoute = CustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CustomersRoute,
+} as any)
+const CustomerProfileIdRoute = CustomerProfileIdRouteImport.update({
+  id: '/customer-profile/$id',
+  path: '/customer-profile/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
   '/inventory': typeof InventoryRoute
@@ -123,13 +135,15 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/customer-profile/$id': typeof CustomerProfileIdRoute
+  '/customers/$id': typeof CustomersIdRoute
   '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
   '/inventory': typeof InventoryRoute
@@ -141,6 +155,8 @@ export interface FileRoutesByTo {
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/customer-profile/$id': typeof CustomerProfileIdRoute
+  '/customers/$id': typeof CustomersIdRoute
   '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRoutesById {
@@ -148,7 +164,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
   '/inventory': typeof InventoryRoute
@@ -160,6 +176,8 @@ export interface FileRoutesById {
   '/sales': typeof SalesRoute
   '/service': typeof ServiceRoute
   '/users': typeof UsersRoute
+  '/customer-profile/$id': typeof CustomerProfileIdRoute
+  '/customers/$id': typeof CustomersIdRoute
   '/purchase/$id': typeof PurchaseIdRoute
 }
 export interface FileRouteTypes {
@@ -180,6 +198,8 @@ export interface FileRouteTypes {
     | '/sales'
     | '/service'
     | '/users'
+    | '/customer-profile/$id'
+    | '/customers/$id'
     | '/purchase/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +218,8 @@ export interface FileRouteTypes {
     | '/sales'
     | '/service'
     | '/users'
+    | '/customer-profile/$id'
+    | '/customers/$id'
     | '/purchase/$id'
   id:
     | '__root__'
@@ -216,6 +238,8 @@ export interface FileRouteTypes {
     | '/sales'
     | '/service'
     | '/users'
+    | '/customer-profile/$id'
+    | '/customers/$id'
     | '/purchase/$id'
   fileRoutesById: FileRoutesById
 }
@@ -223,7 +247,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdvertisingRoute: typeof AdvertisingRoute
-  CustomersRoute: typeof CustomersRoute
+  CustomersRoute: typeof CustomersRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   FinancingRoute: typeof FinancingRoute
   InventoryRoute: typeof InventoryRoute
@@ -235,6 +259,7 @@ export interface RootRouteChildren {
   SalesRoute: typeof SalesRoute
   ServiceRoute: typeof ServiceRoute
   UsersRoute: typeof UsersRoute
+  CustomerProfileIdRoute: typeof CustomerProfileIdRoute
   PurchaseIdRoute: typeof PurchaseIdRoute
 }
 
@@ -352,14 +377,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PurchaseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customers/$id': {
+      id: '/customers/$id'
+      path: '/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof CustomersIdRouteImport
+      parentRoute: typeof CustomersRoute
+    }
+    '/customer-profile/$id': {
+      id: '/customer-profile/$id'
+      path: '/customer-profile/$id'
+      fullPath: '/customer-profile/$id'
+      preLoaderRoute: typeof CustomerProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface CustomersRouteChildren {
+  CustomersIdRoute: typeof CustomersIdRoute
+}
+
+const CustomersRouteChildren: CustomersRouteChildren = {
+  CustomersIdRoute: CustomersIdRoute,
+}
+
+const CustomersRouteWithChildren = CustomersRoute._addFileChildren(
+  CustomersRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdvertisingRoute: AdvertisingRoute,
-  CustomersRoute: CustomersRoute,
+  CustomersRoute: CustomersRouteWithChildren,
   DashboardRoute: DashboardRoute,
   FinancingRoute: FinancingRoute,
   InventoryRoute: InventoryRoute,
@@ -371,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesRoute: SalesRoute,
   ServiceRoute: ServiceRoute,
   UsersRoute: UsersRoute,
+  CustomerProfileIdRoute: CustomerProfileIdRoute,
   PurchaseIdRoute: PurchaseIdRoute,
 }
 export const routeTree = rootRouteImport

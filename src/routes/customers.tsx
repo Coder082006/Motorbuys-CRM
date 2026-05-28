@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,6 +255,7 @@ function toCustomerPayload(values: CustomerFormValues) {
 
 function Customers() {
   useAuthRedirect();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -393,16 +394,35 @@ function Customers() {
             </TableHeader>
             <TableBody>
               {customers.map((customer) => (
-                <TableRow key={customer.id}>
+                <TableRow
+                  key={customer.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() =>
+                    navigate({
+                      to: "/customer-profile/$id",
+                      params: { id: String(customer.id) },
+                    })
+                  }
+                >
                   <TableCell>
-                    <CustomerAvatar
-                      profilePicture={customer.profile_picture}
-                      initials={customer.initials}
-                      avatarColor={customer.avatar_color}
-                      size="md"
-                    />
+                    <Link to="/customer-profile/$id" params={{ id: String(customer.id) }}>
+                      <CustomerAvatar
+                        profilePicture={customer.profile_picture}
+                        initials={customer.initials}
+                        avatarColor={customer.avatar_color}
+                        size="md"
+                      />
+                    </Link>
                   </TableCell>
-                  <TableCell className="font-medium">{customer.full_name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      to="/customer-profile/$id"
+                      params={{ id: String(customer.id) }}
+                      className="hover:text-brand-orange hover:underline"
+                    >
+                      {customer.full_name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone}</TableCell>
                   <TableCell>{customer.region || "-"}</TableCell>
                   <TableCell>
@@ -413,21 +433,29 @@ function Customers() {
                   <TableCell>{customer.assigned_to_name || "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1">
+                      <Button size="icon" variant="ghost" asChild>
+                        <Link to="/customer-profile/$id" params={{ id: String(customer.id) }}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => setViewingCustomer(customer)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEdit(customer);
+                        }}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleEdit(customer)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="text-destructive"
-                        onClick={() => setDeletingCustomer(customer)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingCustomer(customer);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -924,3 +952,4 @@ function ProfileField({ label, value }: { label: string; value: string | null })
     </div>
   );
 }
+

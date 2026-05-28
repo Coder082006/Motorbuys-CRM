@@ -268,7 +268,7 @@ function ShopHomePage() {
   return (
     <div className="min-h-screen bg-[#f4f1ec] text-[#101418]">
       <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto grid min-h-16 max-w-7xl grid-cols-1 items-center gap-3 px-4 py-3 md:grid-cols-[auto_minmax(280px,420px)_auto] md:justify-between">
           <Link to="/" className="flex min-w-fit items-center gap-2">
             <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#f97316] text-white shadow-lg shadow-orange-500/25">
               <Bike className="h-5 w-5" />
@@ -276,22 +276,7 @@ function ShopHomePage() {
             <span className="text-xl font-black tracking-tight">MOTORBUY</span>
           </Link>
 
-          <nav className="hidden items-center gap-1 text-sm font-semibold lg:flex">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/">Home</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={auth.isAdmin ? "/inventory" : "/login"}>Inventory</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={auth.isAdmin ? "/sales" : "/login"}>Sales</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={auth.isAdmin ? "/reports" : "/login"}>Reports</Link>
-            </Button>
-          </nav>
-
-          <div className="relative order-last w-full md:order-none md:ml-auto md:max-w-sm">
+          <div className="relative w-full justify-self-center">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               value={search}
@@ -301,7 +286,7 @@ function ShopHomePage() {
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <div className="flex items-center gap-2 justify-self-start md:justify-self-end">
             {auth.isAuthenticated ? (
               <>
                 {auth.isAdmin ? (
