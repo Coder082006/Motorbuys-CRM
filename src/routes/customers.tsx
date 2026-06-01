@@ -408,8 +408,10 @@ function Customers() {
                     <Link to="/customer-profile/$id" params={{ id: String(customer.id) }}>
                       <CustomerAvatar
                         profilePicture={customer.profile_picture}
+                        hasPhoto={customer.has_photo}
                         initials={customer.initials}
                         avatarColor={customer.avatar_color}
+                        preferIcon
                         size="md"
                       />
                     </Link>
@@ -903,8 +905,10 @@ function CustomerProfileSheet({
               <div className="flex items-center gap-4">
                 <CustomerAvatar
                   profilePicture={customer.profile_picture}
+                  hasPhoto={customer.has_photo}
                   initials={customer.initials}
                   avatarColor={customer.avatar_color}
+                  preferIcon
                   size="xl"
                 />
                 <div>

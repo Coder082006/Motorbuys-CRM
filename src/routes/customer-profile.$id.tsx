@@ -71,6 +71,7 @@ type CustomerProfile = {
   how_heard?: string | null;
   notes?: string | null;
   profile_picture?: string | null;
+  has_photo?: boolean;
   initials: string;
   avatar_color: string;
   assigned_to_name?: string | null;
@@ -149,30 +150,45 @@ function CustomerProfilePage() {
       </Button>
 
       <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="h-36 bg-gradient-to-r from-slate-950 via-slate-800 to-orange-500" />
-        <div className="px-6 pb-6">
-          <div className="-mt-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <CustomerAvatar
-                profilePicture={customer.profile_picture ?? null}
-                initials={customer.initials}
-                avatarColor={customer.avatar_color}
-                size="xl"
-              />
-              <div className="pb-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-3xl font-bold">{customer.full_name}</h1>
-                  <Badge className={statusClass(customer.status)}>{statusLabel(customer.status)}</Badge>
+        <div className="relative h-20 bg-gradient-to-r from-slate-950 via-slate-800 to-orange-500 sm:h-24">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(120deg,rgba(15,23,42,0.75),rgba(249,115,22,0.35))]" />
+        </div>
+        <div className="px-5 pb-7 sm:px-8">
+          <div className="-mt-2 rounded-2xl border bg-card p-5 shadow-sm sm:-mt-3 sm:p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="rounded-full bg-card p-1.5 shadow-md ring-1 ring-orange-100">
+                  <CustomerAvatar
+                    profilePicture={customer.profile_picture ?? null}
+                    hasPhoto={customer.has_photo}
+                    initials={customer.initials}
+                    avatarColor={customer.avatar_color}
+                    preferIcon
+                    size="xl"
+                  />
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {text(customer.customer_type)} customer joined {dateText(customer.created_at)}
-                </p>
+                <div className="min-w-0">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <h1 className="break-words text-3xl font-bold leading-tight text-foreground">
+                      {customer.full_name}
+                    </h1>
+                    <Badge className={`w-fit ${statusClass(customer.status)}`}>
+                      {statusLabel(customer.status)}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {text(customer.customer_type)} customer joined {dateText(customer.created_at)}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <ContactPill icon={Phone} value={customer.phone} />
-              <ContactPill icon={Mail} value={customer.email} />
-              <ContactPill icon={MapPin} value={[customer.region, customer.district].filter(Boolean).join(", ")} />
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                <ContactPill icon={Phone} value={customer.phone} />
+                <ContactPill icon={Mail} value={customer.email} />
+                <ContactPill
+                  icon={MapPin}
+                  value={[customer.region, customer.district].filter(Boolean).join(", ")}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -186,11 +202,11 @@ function CustomerProfilePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Customer Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CardContent className="grid gap-3 sm:grid-cols-2">
             <Info label="Phone" value={customer.phone} />
             <Info label="Alt Phone" value={customer.alt_phone} />
             <Info label="Email" value={customer.email} />
@@ -205,7 +221,7 @@ function CustomerProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Recent Online Orders</CardTitle>
           </CardHeader>
@@ -294,9 +310,9 @@ function CustomerProfilePage() {
 function ContactPill({ icon: Icon, value }: { icon: LucideIcon; value?: string | null }) {
   if (!value) return null;
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-sm">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      {value}
+    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-2 text-sm font-medium text-slate-900 shadow-sm">
+      <Icon className="h-4 w-4 text-brand-orange" />
+      <span className="truncate">{value}</span>
     </span>
   );
 }
@@ -317,9 +333,9 @@ function Metric({ title, value, icon: Icon }: { title: string; value: number; ic
 
 function Info({ label, value, wide = false }: { label: string; value: unknown; wide?: boolean }) {
   return (
-    <div className={wide ? "sm:col-span-2" : ""}>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-medium">{text(value)}</p>
+    <div className={`rounded-lg border bg-slate-50 p-3 ${wide ? "sm:col-span-2" : ""}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-slate-950">{text(value)}</p>
     </div>
   );
 }
