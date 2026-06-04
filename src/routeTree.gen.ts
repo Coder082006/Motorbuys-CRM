@@ -14,7 +14,9 @@ import { Route as ServiceRouteImport } from './routes/service'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarketingRouteImport } from './routes/marketing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -53,9 +55,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingRoute = MarketingRouteImport.update({
@@ -129,7 +141,9 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -149,7 +163,9 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -170,7 +186,9 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/marketing': typeof MarketingRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -192,7 +210,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/onboarding'
     | '/orders'
+    | '/profile'
     | '/register'
     | '/reports'
     | '/sales'
@@ -212,7 +232,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/onboarding'
     | '/orders'
+    | '/profile'
     | '/register'
     | '/reports'
     | '/sales'
@@ -232,7 +254,9 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/marketing'
+    | '/onboarding'
     | '/orders'
+    | '/profile'
     | '/register'
     | '/reports'
     | '/sales'
@@ -253,7 +277,9 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LoginRoute: typeof LoginRoute
   MarketingRoute: typeof MarketingRoute
+  OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
@@ -300,11 +326,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing': {
@@ -416,7 +456,9 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LoginRoute: LoginRoute,
   MarketingRoute: MarketingRoute,
+  OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,

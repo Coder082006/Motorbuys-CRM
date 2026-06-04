@@ -24,6 +24,12 @@ function formatError(error: unknown) {
   return "Registration failed";
 }
 
+function needsOnboarding(customer: unknown) {
+  if (!customer || typeof customer !== "object") return true;
+  const completed = (customer as { onboarding_completed?: unknown }).onboarding_completed;
+  return completed !== true;
+}
+
 function RegisterPage() {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -58,11 +64,15 @@ function RegisterPage() {
       };
       auth.login(response.access, user, response.refresh);
       const next = getNextPath();
-      if (next) {
-        window.location.href = next;
-      } else {
-        navigate({ to: "/" });
+      if (needsOnboarding(response.customer)) {
+        if (next) {
+          window.sessionStorage.setItem("post_onboarding_next", next);
+        }
+        window.location.href = "/onboarding";
+        return;
       }
+
+      window.location.href = next || "/";
     } catch (error) {
       setErrorMessage(formatError(error));
     } finally {

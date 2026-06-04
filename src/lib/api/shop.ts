@@ -46,6 +46,54 @@ export type AdminCustomer = {
   created_at?: string;
 };
 
+export type CustomerProfile = {
+  id: number;
+  full_name: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  email: string;
+  phone: string;
+  alt_phone?: string | null;
+  region?: string | null;
+  district?: string | null;
+  address?: string | null;
+  budget?: string | number | null;
+  preferred_bike_type?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  date_joined?: string;
+  profile_picture?: string | null;
+  has_photo?: boolean;
+  initials?: string;
+  avatar_color?: string | null;
+  onboarding_completed?: boolean | null;
+  onboarding_skipped?: boolean | null;
+  use_case?: string | null;
+  budget_range?: string | null;
+  preferred_brands?: string | string[] | null;
+  preferred_features?: string[] | null;
+  riding_experience?: string | null;
+  heard_from?: string | null;
+};
+
+export type OnboardingPayload = {
+  onboarding_completed: boolean;
+  onboarding_skipped?: boolean;
+  use_case?: string;
+  budget_range?: string;
+  preferred_brands?: string;
+  preferred_features?: string[];
+  riding_experience?: string;
+  heard_from?: string;
+  alt_phone?: string;
+  region?: string;
+  district?: string;
+  address?: string;
+  preferred_bike_type?: string;
+  notes?: string;
+};
+
 export type CreateOrderPayload = {
   motorbike: number;
   payment_method: "mpesa" | "cash" | "bank_transfer" | "installment" | "demo";
@@ -96,4 +144,22 @@ export async function getAdminOrders() {
 
 export async function getAdminCustomers() {
   return apiClient<PaginatedResponse<AdminCustomer>>("/customers/");
+}
+
+export async function getMyCustomerProfile() {
+  return apiClient<CustomerProfile>("/customers/me/");
+}
+
+export async function updateMyCustomerProfile(payload: FormData) {
+  return apiClient<CustomerProfile>("/customers/me/", {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export async function saveMyOnboarding(payload: OnboardingPayload) {
+  return apiClient<CustomerProfile>("/customers/me/onboarding/", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

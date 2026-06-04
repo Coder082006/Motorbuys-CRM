@@ -411,7 +411,6 @@ function Customers() {
                         hasPhoto={customer.has_photo}
                         initials={customer.initials}
                         avatarColor={customer.avatar_color}
-                        preferIcon
                         size="md"
                       />
                     </Link>
@@ -908,7 +907,6 @@ function CustomerProfileSheet({
                   hasPhoto={customer.has_photo}
                   initials={customer.initials}
                   avatarColor={customer.avatar_color}
-                  preferIcon
                   size="xl"
                 />
                 <div>

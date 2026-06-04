@@ -74,6 +74,14 @@ type CustomerProfile = {
   has_photo?: boolean;
   initials: string;
   avatar_color: string;
+  onboarding_completed?: boolean | null;
+  onboarding_skipped?: boolean | null;
+  use_case?: string | null;
+  budget_range?: string | null;
+  preferred_brands?: string | string[] | null;
+  preferred_features?: string[] | null;
+  riding_experience?: string | null;
+  heard_from?: string | null;
   assigned_to_name?: string | null;
   created_at?: string;
   activity_summary?: ActivitySummary;
@@ -163,7 +171,6 @@ function CustomerProfilePage() {
                     hasPhoto={customer.has_photo}
                     initials={customer.initials}
                     avatarColor={customer.avatar_color}
-                    preferIcon
                     size="xl"
                   />
                 </div>
@@ -240,6 +247,28 @@ function CustomerProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Customer Preferences</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Info label="Main motorbike use" value={customer.use_case} emptyText="Not provided" />
+          <Info label="Budget range" value={customer.budget_range} emptyText="Not provided" />
+          <Info label="Preferred brands" value={customer.preferred_brands} emptyText="Not provided" />
+          <Info
+            label="Important features"
+            value={customer.preferred_features}
+            emptyText="Not provided"
+          />
+          <Info
+            label="Riding experience"
+            value={customer.riding_experience}
+            emptyText="Not provided"
+          />
+          <Info label="Heard from" value={customer.heard_from} emptyText="Not provided" />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <HistoryCard
@@ -331,11 +360,29 @@ function Metric({ title, value, icon: Icon }: { title: string; value: number; ic
   );
 }
 
-function Info({ label, value, wide = false }: { label: string; value: unknown; wide?: boolean }) {
+function Info({
+  label,
+  value,
+  wide = false,
+  emptyText = "-",
+}: {
+  label: string;
+  value: unknown;
+  wide?: boolean;
+  emptyText?: string;
+}) {
+  const displayValue = Array.isArray(value)
+    ? value.length
+      ? value.join(", ")
+      : emptyText
+    : text(value) === "-"
+      ? emptyText
+      : text(value);
+
   return (
     <div className={`rounded-lg border bg-slate-50 p-3 ${wide ? "sm:col-span-2" : ""}`}>
       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold text-slate-950">{text(value)}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-slate-950">{displayValue}</p>
     </div>
   );
 }

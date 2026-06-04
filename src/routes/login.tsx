@@ -17,6 +17,12 @@ function getNextPath() {
   return new URLSearchParams(window.location.search).get("next");
 }
 
+function needsOnboarding(customer: unknown) {
+  if (!customer || typeof customer !== "object") return true;
+  const completed = (customer as { onboarding_completed?: unknown }).onboarding_completed;
+  return completed !== true;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -44,6 +50,11 @@ function LoginPage() {
       const next = getNextPath();
       if (user.is_staff) {
         navigate({ to: "/admin-dashboard" });
+      } else if (needsOnboarding(response.customer)) {
+        if (next) {
+          window.sessionStorage.setItem("post_onboarding_next", next);
+        }
+        window.location.href = "/onboarding";
       } else if (next) {
         window.location.href = next;
       } else {
