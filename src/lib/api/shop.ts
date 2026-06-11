@@ -14,6 +14,28 @@ export type MotorbikeProduct = {
   status: string;
   image?: string | null;
   notes?: string;
+  average_rating?: number | null;
+  reviews?: ProductReview[];
+};
+
+export type ProductReview = {
+  id: number;
+  order: number;
+  motorbike: number;
+  motorbike_name?: string;
+  customer_name?: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at?: string;
+};
+
+export type CartItem = {
+  id: number;
+  motorbike: number;
+  motorbike_detail?: MotorbikeProduct;
+  created_at: string;
+  updated_at?: string;
 };
 
 export type ShopOrder = {
@@ -34,6 +56,8 @@ export type ShopOrder = {
   phone: string;
   notes?: string;
   created_at: string;
+  updated_at?: string;
+  review?: ProductReview | null;
 };
 
 export type AdminCustomer = {
@@ -127,11 +151,46 @@ export async function createShopOrder(payload: CreateOrderPayload) {
   });
 }
 
+export async function getCartItems() {
+  return apiClient<PaginatedResponse<CartItem>>("/shop/cart/");
+}
+
+export async function addCartItem(motorbike: number) {
+  return apiClient<CartItem>("/shop/cart/", {
+    method: "POST",
+    body: JSON.stringify({ motorbike }),
+  });
+}
+
+export async function removeCartItem(cartItemId: number) {
+  return apiClient<void>(`/shop/cart/${cartItemId}/`, {
+    method: "DELETE",
+  });
+}
+
 export async function completeDemoPayment(orderId: number, phone: string) {
   return apiClient<ShopOrder>(`/shop/orders/${orderId}/complete-demo-payment/`, {
     method: "POST",
     body: JSON.stringify({ phone }),
   });
+}
+
+export async function confirmOrderReceived(orderId: number) {
+  return apiClient<ShopOrder>(`/shop/orders/${orderId}/confirm-received/`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function submitOrderReview(orderId: number, rating: number, comment: string) {
+  return apiClient<ProductReview>(`/shop/orders/${orderId}/review/`, {
+    method: "POST",
+    body: JSON.stringify({ rating, comment }),
+  });
+}
+
+export async function getProductReviews(productId: number) {
+  return apiClient<PaginatedResponse<ProductReview>>(`/shop/products/${productId}/reviews/`);
 }
 
 export async function getMyOrders() {
@@ -140,6 +199,13 @@ export async function getMyOrders() {
 
 export async function getAdminOrders() {
   return apiClient<PaginatedResponse<ShopOrder>>("/orders/");
+}
+
+export async function updateAdminOrderStatus(orderId: number, status: string) {
+  return apiClient<ShopOrder>(`/orders/${orderId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
 export async function getAdminCustomers() {

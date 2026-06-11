@@ -1,15 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, CreditCard, Landmark, Loader2, Phone } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CreditCard, Landmark, Loader2, Phone, ShoppingCart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomerRoute, useAuth } from "../context/AuthContext";
 import {
   createShopOrder,
+  addCartItem,
+  getProductReviews,
   getShopProduct,
   type MotorbikeProduct,
+  type ProductReview,
   type ShopOrder,
 } from "../lib/api/shop";
 import { BASE_URL } from "../lib/api/client";
@@ -72,7 +75,9 @@ function PurchasePage() {
 
 function PurchaseContent({ id }: { id: number }) {
   const auth = useAuth();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<MotorbikeProduct | null>(null);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [order, setOrder] = useState<ShopOrder | null>(null);
   const [phone, setPhone] = useState(auth.user?.phone || "");
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -97,6 +102,14 @@ function PurchaseContent({ id }: { id: number }) {
         if (isMounted) setIsLoading(false);
       });
 
+    getProductReviews(id)
+      .then((response) => {
+        if (isMounted) setReviews(response.results);
+      })
+      .catch(() => {
+        if (isMounted) setReviews([]);
+      });
+
     return () => {
       isMounted = false;
     };
@@ -104,6 +117,17 @@ function PurchaseContent({ id }: { id: number }) {
 
   const name = useMemo(() => (product ? productName(product) : "Motorbike"), [product]);
   const customerName = auth.user?.name || auth.user?.email || "Customer";
+
+  const addProductToCart = async () => {
+    if (!product) return;
+    setErrorMessage("");
+    try {
+      await addCartItem(product.id);
+      navigate({ to: "/cart" });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not add to cart.");
+    }
+  };
 
   const proceedToPayment = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -233,6 +257,19 @@ function PurchaseContent({ id }: { id: number }) {
                 <Spec label="Engine" value={`${product.model_detail?.engine_cc || "N/A"} cc`} />
               </div>
               {product.notes ? <p className="mt-5 text-muted-foreground">{product.notes}</p> : null}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button
+                  className="rounded-full bg-brand-orange text-white hover:bg-brand-orange/90"
+                  onClick={() => void addProductToCart()}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Add to Cart
+                </Button>
+                <Button asChild variant="outline" className="rounded-full">
+                  <Link to="/cart">View Cart</Link>
+                </Button>
+              </div>
+              <ReviewsPanel reviews={reviews} />
             </div>
           </section>
 
@@ -296,6 +333,51 @@ function PurchaseContent({ id }: { id: number }) {
         />
       ) : null}
     </main>
+  );
+}
+
+function ReviewsPanel({ reviews }: { reviews: ProductReview[] }) {
+  return (
+    <section className="mt-8 rounded-2xl border bg-slate-50 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black">Customer Reviews</h2>
+          <p className="text-sm text-slate-500">Feedback from delivered Motorbuy orders.</p>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-600">
+          {reviews.length} reviews
+        </span>
+      </div>
+      {reviews.length === 0 ? (
+        <p className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-500">
+          No customer feedback has been submitted for this motorbike yet.
+        </p>
+      ) : (
+        <div className="mt-4 grid gap-3">
+          {reviews.map((review) => (
+            <article key={review.id} className="rounded-xl bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-black">{review.customer_name || "Motorbuy customer"}</p>
+                <div className="flex text-brand-orange">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star
+                      key={index}
+                      className={[
+                        "h-4 w-4",
+                        index < review.rating ? "fill-current" : "text-slate-200",
+                      ].join(" ")}
+                    />
+                  ))}
+                </div>
+              </div>
+              {review.comment ? (
+                <p className="mt-2 text-sm leading-6 text-slate-600">{review.comment}</p>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

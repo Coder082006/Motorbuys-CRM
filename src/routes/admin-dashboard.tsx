@@ -7,6 +7,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import {
   getAdminCustomers,
   getAdminOrders,
+  updateAdminOrderStatus,
   type AdminCustomer,
   type ShopOrder,
 } from "../lib/api/shop";
@@ -83,6 +84,16 @@ function AdminDashboardContent() {
     [orders],
   );
 
+  const reviewedOrders = useMemo(
+    () => orders.filter((order) => order.review).length,
+    [orders],
+  );
+
+  async function changeOrderStatus(order: ShopOrder, nextStatus: string) {
+    const updated = await updateAdminOrderStatus(order.id, nextStatus);
+    setOrders((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -102,6 +113,7 @@ function AdminDashboardContent() {
         <StatCard icon={Users} label="Total Customers" value={customers.length.toString()} />
         <StatCard icon={Wallet} label="Total Revenue" value={money(totalRevenue)} />
         <StatCard icon={Bike} label="Pending Orders" value={pendingOrders.toString()} />
+        <StatCard icon={ShoppingCart} label="Reviews" value={reviewedOrders.toString()} />
       </div>
 
       {isLoading ? (
@@ -130,14 +142,15 @@ function AdminDashboardContent() {
                     <th className="px-4 py-3 font-medium">Phone</th>
                     <th className="px-4 py-3 font-medium">Motorbike</th>
                     <th className="px-4 py-3 font-medium">Amount</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Status / Delivery</th>
+                    <th className="px-4 py-3 font-medium">Feedback</th>
                     <th className="px-4 py-3 font-medium">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                      <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
                         No online orders yet.
                       </td>
                     </tr>
@@ -151,7 +164,39 @@ function AdminDashboardContent() {
                         <td className="px-4 py-3">{order.phone}</td>
                         <td className="px-4 py-3">{orderMotorbikeName(order)}</td>
                         <td className="px-4 py-3">{money(order.amount ?? order.total_amount)}</td>
-                        <td className="px-4 py-3 capitalize">{order.status.replace("_", " ")}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={order.status}
+                            className="rounded-full border bg-white px-3 py-2 text-sm capitalize"
+                            onChange={(event) => void changeOrderStatus(order, event.target.value)}
+                          >
+                            {[
+                              "pending",
+                              "confirmed",
+                              "paid_demo",
+                              "processing",
+                              "out_for_delivery",
+                              "delivered",
+                              "cancelled",
+                            ].map((status) => (
+                              <option key={status} value={status}>
+                                {status.replace("_", " ")}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          {order.review ? (
+                            <div>
+                              <div className="font-semibold">{order.review.rating}/5</div>
+                              <div className="max-w-[220px] truncate text-muted-foreground">
+                                {order.review.comment || "No comment"}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">No feedback</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           {new Date(order.created_at).toLocaleDateString()}
                         </td>

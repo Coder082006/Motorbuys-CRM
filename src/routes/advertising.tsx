@@ -26,7 +26,27 @@ export const Route = createFileRoute("/advertising")({
   head: () => ({ meta: [{ title: "Advertising - Motorbike CRM" }] }),
 });
 
-const platformIcon: Record<string, any> = { Facebook, Instagram, Google: Globe, TV: Tv, Radio, Billboard: ImageIcon };
+const platformOptions = [
+  { value: "facebook", label: "Facebook", icon: Facebook },
+  { value: "instagram", label: "Instagram", icon: Instagram },
+  { value: "google", label: "Google", icon: Globe },
+  { value: "tv", label: "TV", icon: Tv },
+  { value: "radio", label: "Radio", icon: Radio },
+  { value: "newspaper", label: "Newspaper", icon: ImageIcon },
+  { value: "billboard", label: "Billboard", icon: ImageIcon },
+  { value: "whatsapp", label: "WhatsApp", icon: Globe },
+  { value: "other", label: "Other", icon: Globe },
+] as const;
+
+const platformIcon = platformOptions.reduce<Record<string, typeof Globe>>((acc, option) => {
+  acc[option.value] = option.icon;
+  return acc;
+}, {});
+
+const platformLabel = platformOptions.reduce<Record<string, string>>((acc, option) => {
+  acc[option.value] = option.label;
+  return acc;
+}, {});
 const statusColor: Record<string, string> = {
   draft: "bg-slate-200 text-slate-700",
   active: "bg-emerald-100 text-emerald-700",
@@ -99,7 +119,7 @@ function Advertising() {
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-sm">
                           <Icon className="h-4 w-4 text-brand-orange" />
-                          {c.platform}
+                          {platformLabel[c.platform] ?? c.platform}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -160,7 +180,7 @@ function CampaignModal({ open, onOpenChange, creating, updating, onCreate, onUpd
         <DialogHeader><DialogTitle>{form.id ? 'Edit Campaign' : 'New Campaign'}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5 col-span-2"><Label>Title</Label><Input value={form.title} onChange={(e)=>setForm((s:any)=>({...s,title:e.target.value}))} /></div>
-          <div className="space-y-1.5"><Label>Platform</Label><Select value={form.platform} onValueChange={(v)=>setForm((s:any)=>({...s,platform:v}))}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{Object.keys(platformIcon).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-1.5"><Label>Platform</Label><Select value={form.platform} onValueChange={(v)=>setForm((s:any)=>({...s,platform:v}))}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{platformOptions.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-1.5"><Label>Budget</Label><Input type="number" value={form.budget} onChange={(e)=>setForm((s:any)=>({...s,budget:e.target.value}))} /></div>
           <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date} onChange={(e)=>setForm((s:any)=>({...s,start_date:e.target.value}))} /></div>
           <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date} onChange={(e)=>setForm((s:any)=>({...s,end_date:e.target.value}))} /></div>

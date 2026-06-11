@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CalendarDays, CheckCircle2, CreditCard, Loader2, Receipt, ShoppingBag } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, CreditCard, Loader2, Receipt, ShoppingBag, Star, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomerRoute } from "../context/AuthContext";
-import { completeDemoPayment, getMyOrders, type ShopOrder } from "../lib/api/shop";
+import {
+  completeDemoPayment,
+  confirmOrderReceived,
+  getMyOrders,
+  submitOrderReview,
+  type ShopOrder,
+} from "../lib/api/shop";
 import { formatCurrency } from "../lib/utils/formatters";
 
 export const Route = createFileRoute("/orders")({
@@ -24,6 +30,7 @@ function paymentText(value: string) {
 
 function statusText(value: string) {
   if (value === "paid_demo") return "Paid";
+  if (value === "out_for_delivery") return "Out for delivery";
   return value.replace("_", " ");
 }
 
@@ -54,6 +61,9 @@ function OrdersPage() {
 function OrdersContent() {
   const [orders, setOrders] = useState<ShopOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ShopOrder | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<ShopOrder | null>(null);
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
   const [paymentPhone, setPaymentPhone] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -108,6 +118,40 @@ function OrdersContent() {
       setErrorMessage(error instanceof Error ? error.message : "Could not complete payment.");
     } finally {
       setIsProcessingPayment(false);
+    }
+  };
+
+  const markReceived = async (order: ShopOrder) => {
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      const updated = await confirmOrderReceived(order.id);
+      setOrders((currentOrders) =>
+        currentOrders.map((current) => (current.id === updated.id ? updated : current)),
+      );
+      setSuccessMessage(`Order #${updated.customer_order_number} marked as received.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not confirm delivery.");
+    }
+  };
+
+  const sendReview = async () => {
+    if (!reviewOrder) return;
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      const review = await submitOrderReview(reviewOrder.id, rating, reviewComment);
+      setOrders((currentOrders) =>
+        currentOrders.map((current) =>
+          current.id === reviewOrder.id ? { ...current, review } : current,
+        ),
+      );
+      setSuccessMessage(`Thank you. Review saved for order #${reviewOrder.customer_order_number}.`);
+      setReviewOrder(null);
+      setRating(5);
+      setReviewComment("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not save review.");
     }
   };
 
@@ -225,10 +269,27 @@ function OrdersContent() {
                               >
                                 Complete Payment
                               </Button>
+                            ) : order.status !== "delivered" && order.status !== "cancelled" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-full"
+                                onClick={() => void markReceived(order)}
+                              >
+                                Confirm Received
+                              </Button>
+                            ) : order.status === "delivered" && !order.review ? (
+                              <Button
+                                size="sm"
+                                className="rounded-full bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
+                                onClick={() => setReviewOrder(order)}
+                              >
+                                Review
+                              </Button>
                             ) : (
                               <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
                                 <CheckCircle2 className="h-4 w-4" />
-                                Paid
+                                Done
                               </span>
                             )}
                           </td>
@@ -253,6 +314,7 @@ function OrdersContent() {
                           {statusText(order.status)}
                         </span>
                       </div>
+                      <OrderProgress status={order.status} />
                       <div className="mt-4 space-y-3 text-sm">
                         <div>
                           <p className="text-slate-500">Motorbike</p>
@@ -280,6 +342,21 @@ function OrdersContent() {
                           onClick={() => openPayment(order)}
                         >
                           Complete Payment
+                        </Button>
+                      ) : order.status !== "delivered" && order.status !== "cancelled" ? (
+                        <Button
+                          variant="outline"
+                          className="mt-5 w-full rounded-full"
+                          onClick={() => void markReceived(order)}
+                        >
+                          Confirm Received
+                        </Button>
+                      ) : order.status === "delivered" && !order.review ? (
+                        <Button
+                          className="mt-5 w-full rounded-full bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
+                          onClick={() => setReviewOrder(order)}
+                        >
+                          Leave Review
                         </Button>
                       ) : null}
                     </article>
@@ -346,7 +423,87 @@ function OrdersContent() {
           </section>
         </div>
       ) : null}
+
+      {reviewOrder ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-2xl font-black">Review your motorbike</h2>
+            <p className="mt-1 text-sm text-slate-500">{bikeName(reviewOrder)}</p>
+            <div className="mt-5 space-y-2">
+              <Label>Rating</Label>
+              <div className="flex gap-2">
+                {Array.from({ length: 5 }).map((_, index) => {
+                  const value = index + 1;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={value <= rating ? "text-brand-orange" : "text-slate-300"}
+                      onClick={() => setRating(value)}
+                    >
+                      <Star className="h-7 w-7 fill-current" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="mt-5 space-y-2">
+              <Label htmlFor="review-comment">Feedback</Label>
+              <Input
+                id="review-comment"
+                value={reviewComment}
+                onChange={(event) => setReviewComment(event.target.value)}
+                placeholder="Tell us about your experience"
+              />
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button variant="outline" className="rounded-full" onClick={() => setReviewOrder(null)}>
+                Cancel
+              </Button>
+              <Button className="rounded-full bg-brand-orange text-brand-navy" onClick={() => void sendReview()}>
+                Submit Review
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
+  );
+}
+
+const progressSteps = [
+  { key: "paid", label: "Paid" },
+  { key: "processing", label: "Processing" },
+  { key: "out_for_delivery", label: "Delivery" },
+  { key: "delivered", label: "Received" },
+];
+
+function progressIndex(status: string) {
+  if (status === "paid" || status === "paid_demo") return 0;
+  if (status === "processing") return 1;
+  if (status === "out_for_delivery") return 2;
+  if (status === "delivered") return 3;
+  return -1;
+}
+
+function OrderProgress({ status }: { status: string }) {
+  const active = progressIndex(status);
+  return (
+    <div className="mt-4 grid grid-cols-4 gap-2">
+      {progressSteps.map((step, index) => (
+        <div key={step.key} className="text-center">
+          <div
+            className={[
+              "mx-auto flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black",
+              index <= active ? "border-brand-orange bg-orange-50 text-brand-orange" : "border-slate-200 text-slate-300",
+            ].join(" ")}
+          >
+            {step.key === "out_for_delivery" ? <Truck className="h-4 w-4" /> : index + 1}
+          </div>
+          <p className="mt-1 text-[11px] font-semibold text-slate-500">{step.label}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 

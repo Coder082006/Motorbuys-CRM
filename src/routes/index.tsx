@@ -11,6 +11,7 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
+  ShoppingCart,
   Star,
   Truck,
   UserRound,
@@ -20,7 +21,12 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BASE_URL } from "@/lib/api/client";
-import { getShopProducts, type MotorbikeProduct } from "@/lib/api/shop";
+import {
+  addCartItem,
+  getCartItems,
+  getShopProducts,
+  type MotorbikeProduct,
+} from "@/lib/api/shop";
 import { formatCurrency } from "@/lib/utils/formatters";
 import { useAuth } from "../context/AuthContext";
 import heroBackground from "../../bike2.jpg";
@@ -301,6 +307,11 @@ function ShopHomePage() {
     queryFn: getShopProducts,
     enabled: typeof window !== "undefined",
   });
+  const cartQ = useQuery({
+    queryKey: ["shop", "cart"],
+    queryFn: getCartItems,
+    enabled: auth.isAuthenticated && !auth.isAdmin,
+  });
 
   const allProducts = ((productsQ.data ?? []) as DisplayProduct[]).length
     ? ((productsQ.data ?? []) as DisplayProduct[])
@@ -354,18 +365,20 @@ function ShopHomePage() {
     navigate({ to: "/purchase/$id", params: { id: String(id) } });
   }
 
-  function buyNow(id: number) {
+  async function addToCart(id: number) {
     if (!auth.isAuthenticated) {
-      navigate({ to: "/login", search: { next: `/purchase/${id}` } });
+      navigate({ to: "/login", search: { next: "/" } });
       return;
     }
 
     if (auth.isAdmin) {
-      alert("Admins cannot make purchases");
+      alert("Admins cannot add products to cart");
       return;
     }
 
-    viewDetails(id);
+    await addCartItem(id);
+    await cartQ.refetch();
+    navigate({ to: "/cart" });
   }
 
   function jumpToAvailableBikes() {
@@ -416,6 +429,23 @@ function ShopHomePage() {
                   </Button>
                 ) : (
                   <>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="icon"
+                      className="relative h-10 w-10 shrink-0 rounded-full"
+                      aria-label="Cart"
+                      title="Cart"
+                    >
+                      <Link to="/cart">
+                        <ShoppingCart className="h-4 w-4" />
+                        {cartQ.data?.count ? (
+                          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1 text-[10px] font-black text-white">
+                            {cartQ.data.count}
+                          </span>
+                        ) : null}
+                      </Link>
+                    </Button>
                     <Button asChild variant="outline" size="sm" className="shrink-0 rounded-full">
                       <Link to="/orders">{copy.myOrders}</Link>
                     </Button>
@@ -486,7 +516,7 @@ function ShopHomePage() {
                 shelf={shelf}
                 language={language}
                 onDetails={viewDetails}
-                onPurchase={buyNow}
+                onAddToCart={addToCart}
               />
             ))
           )}
@@ -595,12 +625,12 @@ function MotorbikeShelf({
   shelf,
   language,
   onDetails,
-  onPurchase,
+  onAddToCart,
 }: {
   shelf: ProductShelf;
   language: Language;
   onDetails: (id: number) => void;
-  onPurchase: (id: number) => void;
+  onAddToCart: (id: number) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -658,7 +688,7 @@ function MotorbikeShelf({
             image={imageForProduct(product, index)}
             language={language}
             onDetails={onDetails}
-            onPurchase={onPurchase}
+            onAddToCart={onAddToCart}
           />
         ))}
       </div>
@@ -671,13 +701,13 @@ function MotorbikeCard({
   image,
   language,
   onDetails,
-  onPurchase,
+  onAddToCart,
 }: {
   product: DisplayProduct;
   image: string;
   language: Language;
   onDetails: (id: number) => void;
-  onPurchase: (id: number) => void;
+  onAddToCart: (id: number) => void;
 }) {
   const available = isAvailable(product);
   const isSwahili = language === "sw";
@@ -730,12 +760,12 @@ function MotorbikeCard({
             <Button
               className="rounded-full bg-[#f97316] text-white hover:bg-[#ea580c]"
               disabled={product.isDemo || !available}
-              onClick={() => onPurchase(product.id)}
+              onClick={() => onAddToCart(product.id)}
             >
               {available
                 ? isSwahili
-                  ? "Nunua Sasa"
-                  : "Buy Now"
+                  ? "Weka Kwenye Cart"
+                  : "Add to Cart"
                 : isSwahili
                   ? "Haipatikani"
                   : "Not available"}

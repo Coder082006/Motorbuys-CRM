@@ -23,6 +23,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Smartphone } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
 import { getResults } from "@/lib/api/client";
@@ -260,7 +267,7 @@ function Financing() {
     if (!phone) return;
     const amount = prompt("Amount to request:", l.down_payment || l.loan_amount || "");
     if (!amount) return;
-    initiateMpesa.mutate({ loan: l.id, phone, amount });
+    initiateMpesa.mutate({ loan_id: l.id, phone, amount });
   }
 }
 
@@ -269,6 +276,7 @@ function LoanModal({
   onOpenChange,
   creating,
   onCreate,
+  customers: customersPayload,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -288,6 +296,10 @@ function LoanModal({
   });
 
   if (open !== undefined && open !== isOpen) setIsOpen(open);
+
+  const customers = getResults<{ id: number; first_name?: string; last_name?: string; phone?: string }>(
+    customersPayload as never,
+  );
 
   function submit(e?: React.FormEvent<HTMLFormElement>) {
     e?.preventDefault();
@@ -319,10 +331,23 @@ function LoanModal({
         <form onSubmit={submit} className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5 col-span-2">
             <Label>Customer</Label>
-            <Input
+            <Select
               value={form.customer}
-              onChange={(e) => setForm((current) => ({ ...current, customer: e.target.value }))}
-            />
+              onValueChange={(value) => setForm((current) => ({ ...current, customer: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={String(customer.id)}>
+                    {[customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
+                      `Customer #${customer.id}`}{" "}
+                    {customer.phone ? `- ${customer.phone}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5 col-span-2">
             <Label>Sale</Label>

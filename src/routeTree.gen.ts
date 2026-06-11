@@ -23,6 +23,8 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as FinancingRouteImport } from './routes/financing'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdvertisingRouteImport } from './routes/advertising'
 import { Route as AdminDashboardRouteImport } from './routes/admin-dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -100,6 +102,16 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdvertisingRoute = AdvertisingRouteImport.update({
   id: '/advertising',
   path: '/advertising',
@@ -135,6 +147,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
+  '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
@@ -157,6 +171,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
+  '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
@@ -180,6 +196,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin-dashboard': typeof AdminDashboardRoute
   '/advertising': typeof AdvertisingRoute
+  '/cart': typeof CartRoute
+  '/checkout': typeof CheckoutRoute
   '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/financing': typeof FinancingRoute
@@ -204,6 +222,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-dashboard'
     | '/advertising'
+    | '/cart'
+    | '/checkout'
     | '/customers'
     | '/dashboard'
     | '/financing'
@@ -226,6 +246,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-dashboard'
     | '/advertising'
+    | '/cart'
+    | '/checkout'
     | '/customers'
     | '/dashboard'
     | '/financing'
@@ -248,6 +270,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-dashboard'
     | '/advertising'
+    | '/cart'
+    | '/checkout'
     | '/customers'
     | '/dashboard'
     | '/financing'
@@ -271,6 +295,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdvertisingRoute: typeof AdvertisingRoute
+  CartRoute: typeof CartRoute
+  CheckoutRoute: typeof CheckoutRoute
   CustomersRoute: typeof CustomersRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   FinancingRoute: typeof FinancingRoute
@@ -389,6 +415,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/advertising': {
       id: '/advertising'
       path: '/advertising'
@@ -450,6 +490,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdvertisingRoute: AdvertisingRoute,
+  CartRoute: CartRoute,
+  CheckoutRoute: CheckoutRoute,
   CustomersRoute: CustomersRouteWithChildren,
   DashboardRoute: DashboardRoute,
   FinancingRoute: FinancingRoute,
