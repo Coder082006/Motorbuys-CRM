@@ -79,6 +79,7 @@ function PurchaseContent({ id }: { id: number }) {
   const [product, setProduct] = useState<MotorbikeProduct | null>(null);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [order, setOrder] = useState<ShopOrder | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [phone, setPhone] = useState(auth.user?.phone || "");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
@@ -116,6 +117,11 @@ function PurchaseContent({ id }: { id: number }) {
   }, [id]);
 
   const name = useMemo(() => (product ? productName(product) : "Motorbike"), [product]);
+  const lineTotal = useMemo(
+    () => (product ? Number(product.price) * quantity : 0),
+    [product, quantity],
+  );
+  const maxStock = product?.available_stock ?? product?.stock_quantity ?? 1;
   const customerName = auth.user?.name || auth.user?.email || "Customer";
 
   const addProductToCart = async () => {
@@ -149,6 +155,7 @@ function PurchaseContent({ id }: { id: number }) {
     try {
       const created = await createShopOrder({
         motorbike: product.id,
+        quantity,
         payment_method: "demo",
         delivery_address: deliveryAddress,
         delivery_city: deliveryCity,
@@ -306,7 +313,21 @@ function PurchaseContent({ id }: { id: number }) {
                   onChange={(event) => setDeliveryCity(event.target.value)}
                 />
               </div>
-              <InfoBox label="Order Total" value={formatCurrency(product.price)} />
+              <div className="space-y-2">
+                <Label htmlFor="purchase-qty">Quantity (max {maxStock})</Label>
+                <Input
+                  id="purchase-qty"
+                  type="number"
+                  min={1}
+                  max={maxStock}
+                  value={quantity}
+                  onChange={(event) => {
+                    const val = Math.max(1, Math.min(maxStock, Number(event.target.value) || 1));
+                    setQuantity(val);
+                  }}
+                />
+              </div>
+              <InfoBox label="Order Total" value={formatCurrency(lineTotal)} />
               {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
               <Button
                 type="submit"
@@ -321,7 +342,7 @@ function PurchaseContent({ id }: { id: number }) {
 
       {showPayment ? (
         <DemoPaymentDialog
-          amount={formatCurrency(product.price)}
+          amount={formatCurrency(lineTotal)}
           phone={phone}
           setPhone={setPhone}
           selectedMethod={selectedMethod}

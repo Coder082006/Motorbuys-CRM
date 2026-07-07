@@ -19,6 +19,18 @@ type AuthResponse = {
   customer?: unknown;
 };
 
+export type MfaChallenge = {
+  mfa_required: true;
+  mfa_token: string;
+  delivery: "email";
+  email: string;
+  expires_in_minutes: number;
+  detail?: string;
+  auth_kind: "staff" | "customer";
+};
+
+export type LoginResult = AuthResponse | MfaChallenge;
+
 export type RegisterPayload = {
   name: string;
   email: string;
@@ -70,7 +82,24 @@ function storeAuth(response: AuthResponse): AuthResponse {
   return normalized;
 }
 
-export async function login(username: string, password: string) {
+function isMfaChallenge(data: unknown): data is Omit<MfaChallenge, "auth_kind"> {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as { mfa_required?: unknown }).mfa_required === true &&
+    typeof (data as { mfa_token?: unknown }).mfa_token === "string"
+  );
+}
+
+function withAuthKind(data: Omit<MfaChallenge, "auth_kind">, authKind: MfaChallenge["auth_kind"]) {
+  return { ...data, auth_kind: authKind };
+}
+
+export function isLoginMfaChallenge(data: LoginResult): data is MfaChallenge {
+  return "mfa_required" in data && data.mfa_required === true;
+}
+
+export async function login(username: string, password: string): Promise<LoginResult> {
   const staffResponse = await fetch(`${BASE_URL}/auth/login/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -78,15 +107,34 @@ export async function login(username: string, password: string) {
   });
 
   if (staffResponse.ok) {
-    return storeAuth((await parsePublicAuthResponse(staffResponse)) as AuthResponse);
+    const data = await parsePublicAuthResponse(staffResponse);
+    if (isMfaChallenge(data)) {
+      return withAuthKind(data, "staff");
+    }
+    return storeAuth(data as AuthResponse);
   }
 
+  const shopResponse = await fetch(`${BASE_URL}/shop/auth/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await parsePublicAuthResponse(shopResponse);
+  if (isMfaChallenge(data)) {
+    return withAuthKind(data, "customer");
+  }
+  return storeAuth(data as AuthResponse);
+}
+
+export async function verifyLoginOtp(challenge: MfaChallenge, code: string) {
+  const endpoint =
+    challenge.auth_kind === "staff" ? "/auth/verify-otp/" : "/shop/auth/verify-otp/";
   return storeAuth(
     (await parsePublicAuthResponse(
-      await fetch(`${BASE_URL}/shop/auth/login/`, {
+      await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ mfa_token: challenge.mfa_token, code }),
       }),
     )) as AuthResponse,
   );

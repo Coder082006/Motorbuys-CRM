@@ -15,13 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -33,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { getResults } from "@/lib/api/client";
 import { formatCurrency } from "@/lib/utils/formatters";
-import { Plus, Send } from "lucide-react";
+import { Check, Plus, Send, Users } from "lucide-react";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -82,14 +75,32 @@ function Marketing() {
   const deletePromo = useDeletePromotion();
   const [smsOpen, setSmsOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
+  const [sendMessage, setSendMessage] = useState("");
+  const [sendError, setSendError] = useState("");
 
   const sms = getResults<any>(smsQ.data);
   const promos = getResults<any>(promosQ.data);
   const customers = getResults<any>(customersQ.data);
 
-  function onSendNow(campaign: any) {
+  async function onSendNow(campaign: any) {
     if (!confirm(`Send SMS to ${campaign.recipient_count ?? 0} recipients?`)) return;
-    sendSMS.mutate(campaign.id);
+    setSendMessage("");
+    setSendError("");
+    try {
+      const response = (await sendSMS.mutateAsync(campaign.id)) as {
+        detail?: string;
+        total_sent?: number;
+        total_failed?: number;
+      };
+      await smsQ.refetch();
+      setSendMessage(
+        response?.detail ??
+          `SMS sent successfully to ${response?.total_sent ?? campaign.recipient_count ?? 0} recipient(s).`,
+      );
+    } catch (error) {
+      await smsQ.refetch();
+      setSendError(error instanceof Error ? error.message : "Failed to send SMS campaign.");
+    }
   }
 
   return (
@@ -108,6 +119,16 @@ function Marketing() {
         </TabsList>
 
         <TabsContent value="sms" className="space-y-4">
+          {sendMessage ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+              {sendMessage}
+            </div>
+          ) : null}
+          {sendError ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              {sendError}
+            </div>
+          ) : null}
           <div className="flex justify-end">
             <SmsModal
               open={smsOpen}
@@ -158,9 +179,11 @@ function Marketing() {
                           <Button
                             size="sm"
                             className="gap-1 bg-brand-orange text-brand-navy hover:bg-brand-orange/90"
+                            disabled={sendSMS.isPending}
                             onClick={() => onSendNow(campaign)}
                           >
-                            <Send className="h-3 w-3" /> Send Now
+                            <Send className="h-3 w-3" />{" "}
+                            {sendSMS.isPending ? "Sending..." : "Send Now"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -281,6 +304,10 @@ function SmsModal({
 }) {
   const [form, setForm] = useState({ title: "", message: "", recipients: [] as number[] });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const customersWithPhones = customers.filter((customer) => Boolean(customer.phone));
+  const selectedCount = form.recipients.length;
+  const allSelected =
+    customersWithPhones.length > 0 && selectedCount === customersWithPhones.length;
 
   useEffect(() => {
     if (!open) {
@@ -302,6 +329,11 @@ function SmsModal({
       return;
     }
 
+    if (form.recipients.length === 0) {
+      setErrors({ recipients: "Select at least one customer" });
+      return;
+    }
+
     try {
       await onCreate({ ...form, status: "draft" });
       setForm({ title: "", message: "", recipients: [] });
@@ -309,6 +341,25 @@ function SmsModal({
     } catch (error) {
       setErrors({ form: error instanceof Error ? error.message : "Failed to create SMS campaign" });
     }
+  }
+
+  function toggleRecipient(customerId: number) {
+    setForm((current) => {
+      const exists = current.recipients.includes(customerId);
+      return {
+        ...current,
+        recipients: exists
+          ? current.recipients.filter((id) => id !== customerId)
+          : [...current.recipients, customerId],
+      };
+    });
+  }
+
+  function toggleAllRecipients() {
+    setForm((current) => ({
+      ...current,
+      recipients: allSelected ? [] : customersWithPhones.map((customer) => customer.id),
+    }));
   }
 
   return (
@@ -343,31 +394,70 @@ function SmsModal({
             />
             {errors.message && <p className="text-xs text-destructive">{errors.message}</p>}
           </div>
-          <div className="space-y-1.5">
-            <Label>Recipient</Label>
-            <Select
-              value={form.recipients[0] ? String(form.recipients[0]) : undefined}
-              onValueChange={(value) =>
-                setForm((current) => ({ ...current, recipients: [Number(value)] }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select recipient" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.length ? (
-                  customers.map((customer) => (
-                    <SelectItem key={customer.id} value={String(customer.id)}>
-                      {customer.first_name} {customer.last_name} - {customer.phone}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="none" disabled>
-                    No customers available
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label>Recipients</Label>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                <Users className="h-3.5 w-3.5" />
+                {selectedCount} selected
+              </span>
+            </div>
+            <div className="rounded-xl border bg-slate-50 p-3">
+              {customersWithPhones.length ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={toggleAllRecipients}
+                    className="mb-3 flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2 text-left text-sm font-semibold shadow-sm transition hover:border-brand-orange/70"
+                  >
+                    <span>{allSelected ? "Clear all customers" : "Select all customers"}</span>
+                    <span
+                      className={[
+                        "flex h-5 w-5 items-center justify-center rounded border",
+                        allSelected
+                          ? "border-brand-orange bg-brand-orange text-brand-navy"
+                          : "border-slate-300 bg-white",
+                      ].join(" ")}
+                    >
+                      {allSelected ? <Check className="h-3.5 w-3.5" /> : null}
+                    </span>
+                  </button>
+                  <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                    {customersWithPhones.map((customer) => {
+                      const checked = form.recipients.includes(customer.id);
+                      const name =
+                        [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
+                        `Customer #${customer.id}`;
+
+                      return (
+                        <label
+                          key={customer.id}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm shadow-sm transition hover:bg-orange-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleRecipient(customer.id)}
+                            className="h-4 w-4 accent-brand-orange"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold">{name}</span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {customer.phone}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="rounded-lg bg-white p-3 text-sm text-muted-foreground">
+                  No customers with phone numbers are available.
+                </p>
+              )}
+            </div>
+            {errors.recipients && <p className="text-xs text-destructive">{errors.recipients}</p>}
           </div>
           {errors.form && <p className="text-sm text-destructive">{errors.form}</p>}
         </form>

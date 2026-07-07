@@ -131,86 +131,214 @@ const heroImage =
   "https://images.unsplash.com/photo-1558981359-219d6364c9c8?auto=format&fit=crop&w=1800&q=85";
 
 const demoProducts: DisplayProduct[] = [
+  // --- Scooters / Automatic ---
   {
     id: -101,
-    model_detail: {
-      brand: "Honda",
-      model_name: "Click 125i",
-      engine_cc: 125,
-      bike_type: "automatic",
-    },
-    color: "black",
-    year: 2025,
-    price: 245000,
-    status: "available",
-    image: null,
-    notes: "Smooth automatic scooter for city rides and daily movement.",
-    isDemo: true,
+    model_detail: { brand: "Honda", model_name: "Click 125i", engine_cc: 125, bike_type: "automatic" },
+    color: "black", year: 2025, price: 245000, stock_quantity: 15, available_stock: 15,
+    status: "available", image: null,
+    notes: "Smooth automatic scooter for city rides and daily movement.", isDemo: true,
   },
   {
     id: -102,
-    model_detail: { brand: "Yamaha", model_name: "NMAX", engine_cc: 155, bike_type: "automatic" },
-    color: "blue",
-    year: 2025,
-    price: 385000,
-    status: "available",
-    image: null,
-    notes: "Premium automatic bike with comfort seating and strong road presence.",
-    isDemo: true,
+    model_detail: { brand: "Yamaha", model_name: "NMAX 155", engine_cc: 155, bike_type: "automatic" },
+    color: "blue", year: 2025, price: 385000, stock_quantity: 10, available_stock: 10,
+    status: "available", image: null,
+    notes: "Premium automatic bike with comfort seating and strong road presence.", isDemo: true,
   },
   {
+    id: -103,
+    model_detail: { brand: "Honda", model_name: "PCX 160", engine_cc: 160, bike_type: "automatic" },
+    color: "silver", year: 2025, price: 520000, stock_quantity: 6, available_stock: 6,
+    status: "available", image: null,
+    notes: "Executive automatic scooter with advanced features and elegant ride.", isDemo: true,
+  },
+  {
+    id: -104,
+    model_detail: { brand: "Suzuki", model_name: "Avenis 125", engine_cc: 125, bike_type: "automatic" },
+    color: "white", year: 2025, price: 265000, stock_quantity: 9, available_stock: 9,
+    status: "available", image: null,
+    notes: "Modern automatic scooter with sporty looks and efficient city performance.", isDemo: true,
+  },
+  {
+    id: -105,
+    model_detail: { brand: "Piaggio", model_name: "Liberty 150", engine_cc: 150, bike_type: "automatic" },
+    color: "silver", year: 2025, price: 465000, stock_quantity: 5, available_stock: 5,
+    status: "available", image: null,
+    notes: "Elegant automatic scooter with practical storage and easy city handling.", isDemo: true,
+  },
+  {
+    id: -106,
+    model_detail: { brand: "Yamaha", model_name: "Aerox 155", engine_cc: 155, bike_type: "automatic" },
+    color: "black", year: 2025, price: 420000, stock_quantity: 8, available_stock: 8,
+    status: "available", image: null,
+    notes: "Sporty automatic scooter with aggressive looks and powerful engine.", isDemo: true,
+  },
+  {
+    id: -107,
+    model_detail: { brand: "Honda", model_name: "Adv 160", engine_cc: 160, bike_type: "automatic" },
+    color: "green", year: 2025, price: 550000, stock_quantity: 4, available_stock: 4,
+    status: "available", image: null,
+    notes: "Adventure-inspired scooter with rugged styling and long-travel suspension.", isDemo: true,
+  },
+  {
+    id: -108,
+    model_detail: { brand: "Suzuki", model_name: "Burgman Street 125", engine_cc: 125, bike_type: "automatic" },
+    color: "blue", year: 2025, price: 280000, stock_quantity: 7, available_stock: 7,
+    status: "available", image: null,
+    notes: "Maxi-style scooter with spacious storage and comfortable touring position.", isDemo: true,
+  },
+  // --- Semi-Automatic ---
+  {
     id: -201,
-    model_detail: {
-      brand: "TVS",
-      model_name: "Neo NX",
-      engine_cc: 110,
-      bike_type: "semi-automatic",
-    },
-    color: "red",
-    year: 2024,
-    price: 185000,
-    status: "available",
-    image: null,
-    notes: "Semi-automatic everyday bike with simple handling and low running cost.",
-    isDemo: true,
+    model_detail: { brand: "TVS", model_name: "Neo NX 110", engine_cc: 110, bike_type: "semi-automatic" },
+    color: "red", year: 2025, price: 185000, stock_quantity: 18, available_stock: 18,
+    status: "available", image: null,
+    notes: "Semi-automatic everyday bike with simple handling and low running cost.", isDemo: true,
   },
   {
     id: -202,
-    model_detail: {
-      brand: "Bajaj",
-      model_name: "Boxer X",
-      engine_cc: 150,
-      bike_type: "semi-automatic",
-    },
-    color: "green",
-    year: 2024,
-    price: 225000,
-    status: "reserved",
-    image: null,
-    notes: "Durable semi-automatic option for business, delivery, and rural roads.",
-    isDemo: true,
+    model_detail: { brand: "Bajaj", model_name: "Boxer 150", engine_cc: 150, bike_type: "semi-automatic" },
+    color: "green", year: 2025, price: 225000, stock_quantity: 20, available_stock: 20,
+    status: "available", image: null,
+    notes: "Durable semi-automatic option for business, delivery, and rural roads.", isDemo: true,
   },
   {
+    id: -203,
+    model_detail: { brand: "Kinglion", model_name: "KL150Z", engine_cc: 150, bike_type: "semi-automatic" },
+    color: "black", year: 2025, price: 195000, stock_quantity: 25, available_stock: 25,
+    status: "available", image: null,
+    notes: "Affordable and reliable semi-automatic for daily commuting and business.", isDemo: true,
+  },
+  {
+    id: -204,
+    model_detail: { brand: "Sanya", model_name: "SY150", engine_cc: 150, bike_type: "semi-automatic" },
+    color: "blue", year: 2025, price: 215000, stock_quantity: 16, available_stock: 16,
+    status: "available", image: null,
+    notes: "Affordable semi-automatic motorbike for everyday transport and business use.", isDemo: true,
+  },
+  {
+    id: -205,
+    model_detail: { brand: "Kinglion", model_name: "KL200", engine_cc: 200, bike_type: "semi-automatic" },
+    color: "green", year: 2024, price: 250000, stock_quantity: 12, available_stock: 12,
+    status: "available", image: null,
+    notes: "Powerful semi-automatic workhorse for cargo and tough road conditions.", isDemo: true,
+  },
+  // --- Manual / Street ---
+  {
     id: -301,
-    model_detail: { brand: "Yamaha", model_name: "FZ-S", engine_cc: 149, bike_type: "manual" },
-    color: "silver",
-    year: 2025,
-    price: 410000,
-    status: "available",
-    image: null,
-    notes: "Manual street bike with sporty styling and responsive handling.",
-    isDemo: true,
+    model_detail: { brand: "Yamaha", model_name: "FZ-S V3", engine_cc: 149, bike_type: "manual" },
+    color: "silver", year: 2025, price: 410000, stock_quantity: 7, available_stock: 7,
+    status: "available", image: null,
+    notes: "Manual street bike with sporty styling and responsive handling.", isDemo: true,
   },
   {
     id: -302,
     model_detail: { brand: "Honda", model_name: "CB 150R", engine_cc: 150, bike_type: "manual" },
-    color: "white",
-    year: 2024,
-    price: 390000,
-    status: "sold",
-    image: null,
-    notes: "Manual road bike built for confident riding and clean performance.",
-    isDemo: true,
+    color: "white", year: 2024, price: 390000, stock_quantity: 5, available_stock: 5,
+    status: "available", image: null,
+    notes: "Manual road bike built for confident riding and clean performance.", isDemo: true,
+  },
+  {
+    id: -303,
+    model_detail: { brand: "TVS", model_name: "Apache RTR 160", engine_cc: 160, bike_type: "manual" },
+    color: "white", year: 2025, price: 420000, stock_quantity: 5, available_stock: 5,
+    status: "available", image: null,
+    notes: "Sporty street fighter with race-inspired design and punchy performance.", isDemo: true,
+  },
+  {
+    id: -304,
+    model_detail: { brand: "Suzuki", model_name: "GSX-S150", engine_cc: 150, bike_type: "manual" },
+    color: "blue", year: 2024, price: 380000, stock_quantity: 4, available_stock: 4,
+    status: "available", image: null,
+    notes: "Lightweight manual bike with sporty handling and reliable Suzuki engineering.", isDemo: true,
+  },
+  {
+    id: -305,
+    model_detail: { brand: "Bajaj", model_name: "Pulsar NS200", engine_cc: 199, bike_type: "manual" },
+    color: "red", year: 2025, price: 550000, stock_quantity: 6, available_stock: 6,
+    status: "available", image: null,
+    notes: "Aggressive naked sport bike with powerful engine and muscular styling.", isDemo: true,
+  },
+  // --- Manual / Premium ---
+  {
+    id: -401,
+    model_detail: { brand: "KTM", model_name: "Duke 200", engine_cc: 199, bike_type: "manual" },
+    color: "orange", year: 2025, price: 720000, stock_quantity: 4, available_stock: 4,
+    status: "available", image: null,
+    notes: "Lightweight street bike with sharp handling and aggressive styling.", isDemo: true,
+  },
+  {
+    id: -402,
+    model_detail: { brand: "Royal Enfield", model_name: "Hunter 350", engine_cc: 349, bike_type: "manual" },
+    color: "black", year: 2025, price: 890000, stock_quantity: 5, available_stock: 5,
+    status: "available", image: null,
+    notes: "Classic-modern road bike built for relaxed city and weekend riding.", isDemo: true,
+  },
+  {
+    id: -403,
+    model_detail: { brand: "Hero", model_name: "XPulse 200", engine_cc: 199, bike_type: "manual" },
+    color: "white", year: 2025, price: 590000, stock_quantity: 6, available_stock: 6,
+    status: "available", image: null,
+    notes: "Adventure-ready bike for rough roads, daily movement, and light touring.", isDemo: true,
+  },
+  {
+    id: -404,
+    model_detail: { brand: "Royal Enfield", model_name: "Classic 350", engine_cc: 349, bike_type: "manual" },
+    color: "green", year: 2025, price: 950000, stock_quantity: 3, available_stock: 3,
+    status: "available", image: null,
+    notes: "Timeless classic cruiser with thumping exhaust and vintage styling.", isDemo: true,
+  },
+  {
+    id: -405,
+    model_detail: { brand: "Yamaha", model_name: "MT-15", engine_cc: 155, bike_type: "manual" },
+    color: "blue", year: 2025, price: 480000, stock_quantity: 4, available_stock: 4,
+    status: "available", image: null,
+    notes: "Hyper naked street bike with agressive looks and agile city performance.", isDemo: true,
+  },
+  // --- Sport / Performance ---
+  {
+    id: -501,
+    model_detail: { brand: "KTM", model_name: "RC 200", engine_cc: 199, bike_type: "manual" },
+    color: "orange", year: 2025, price: 780000, stock_quantity: 3, available_stock: 3,
+    status: "available", image: null,
+    notes: "Fully faired sport bike for riders who want track-inspired performance.", isDemo: true,
+  },
+  {
+    id: -502,
+    model_detail: { brand: "Honda", model_name: "CBR 250RR", engine_cc: 249, bike_type: "manual" },
+    color: "red", year: 2024, price: 1200000, stock_quantity: 2, available_stock: 2,
+    status: "available", image: null,
+    notes: "High-revving sport bike with twin-cylinder engine and race DNA.", isDemo: true,
+  },
+  {
+    id: -503,
+    model_detail: { brand: "Ducati", model_name: "Scrambler Icon", engine_cc: 803, bike_type: "manual" },
+    color: "red", year: 2025, price: 1850000, stock_quantity: 3, available_stock: 3,
+    status: "available", image: null,
+    notes: "Premium lifestyle bike with strong performance and distinctive design.", isDemo: true,
+  },
+  {
+    id: -504,
+    model_detail: { brand: "Ducati", model_name: "Monster 797", engine_cc: 797, bike_type: "manual" },
+    color: "black", year: 2024, price: 1650000, stock_quantity: 2, available_stock: 2,
+    status: "available", image: null,
+    notes: "Iconic Italian naked bike with powerful twin-cylinder engine.", isDemo: true,
+  },
+  // --- Demo reserved / sold (for visual testing) ---
+  {
+    id: -601,
+    model_detail: { brand: "Bajaj", model_name: "Boxer 150", engine_cc: 150, bike_type: "semi-automatic" },
+    color: "black", year: 2024, price: 215000, stock_quantity: 0, available_stock: 0,
+    status: "reserved", image: null,
+    notes: "Semi-automatic daily bike currently reserved for a customer.", isDemo: true,
+  },
+  {
+    id: -602,
+    model_detail: { brand: "Honda", model_name: "CB 150R", engine_cc: 150, bike_type: "manual" },
+    color: "black", year: 2024, price: 375000, stock_quantity: 0, available_stock: 0,
+    status: "sold", image: null,
+    notes: "Manual road bike already purchased — no longer available.", isDemo: true,
   },
 ];
 
@@ -239,7 +367,7 @@ function productDescription(product: MotorbikeProduct, language: Language = "en"
 }
 
 function isAvailable(product: MotorbikeProduct) {
-  return product.status === "available";
+  return product.status === "available" && (product.available_stock ?? product.stock_quantity ?? 0) > 0;
 }
 
 function shelfTitle(product: MotorbikeProduct) {
@@ -749,26 +877,23 @@ function MotorbikeCard({
             </p>
             <p className="text-2xl font-black text-slate-950">{formatCurrency(product.price)}</p>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 gap-1.5">
+            {available ? (
+              <Button
+                className="rounded-full bg-[#f97316] text-white hover:bg-[#ea580c] px-4"
+                onClick={() => onDetails(product.id)}
+              >
+                {isSwahili ? "Nunua" : "Buy Now"}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
-              className="rounded-full"
-              onClick={() => onDetails(product.id)}
-            >
-              {isSwahili ? "Maelezo" : "View Details"}
-            </Button>
-            <Button
-              className="rounded-full bg-[#f97316] text-white hover:bg-[#ea580c]"
-              disabled={product.isDemo || !available}
+              className="rounded-full px-4"
+              disabled={!available}
               onClick={() => onAddToCart(product.id)}
             >
-              {available
-                ? isSwahili
-                  ? "Weka Kwenye Cart"
-                  : "Add to Cart"
-                : isSwahili
-                  ? "Haipatikani"
-                  : "Not available"}
+              <ShoppingCart className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">{isSwahili ? "Cart" : "Cart"}</span>
             </Button>
           </div>
         </div>

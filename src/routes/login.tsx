@@ -4,7 +4,7 @@ import { Bike, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { login } from "../lib/api/auth";
+import { isLoginMfaChallenge, login, MfaChallenge, verifyLoginOtp } from "../lib/api/auth";
 import { PublicOnlyRoute, useAuth } from "../context/AuthContext";
 
 export const Route = createFileRoute("/login")({
@@ -28,40 +28,61 @@ function LoginPage() {
   const auth = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [mfaChallenge, setMfaChallenge] = useState<MfaChallenge | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [noticeMessage, setNoticeMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const completeLogin = (response: Awaited<ReturnType<typeof verifyLoginOtp>>) => {
+    const user = {
+      id: response.user.id,
+      name: response.user.name || response.user.username || response.user.email,
+      email: response.user.email,
+      phone: response.user.phone || "",
+      is_staff: response.user.is_staff ?? response.user.role !== "customer",
+      role: response.user.role,
+    };
+    auth.login(response.access, user, response.refresh);
+    const next = getNextPath();
+    if (user.is_staff) {
+      navigate({ to: "/admin-dashboard" });
+    } else if (needsOnboarding(response.customer)) {
+      if (next) {
+        window.sessionStorage.setItem("post_onboarding_next", next);
+      }
+      window.location.href = "/onboarding";
+    } else if (next) {
+      window.location.href = next;
+    } else {
+      navigate({ to: "/" });
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage("");
+    setNoticeMessage("");
     setIsSubmitting(true);
 
     try {
-      const response = await login(email, password);
-      const user = {
-        id: response.user.id,
-        name: response.user.name || response.user.username || response.user.email,
-        email: response.user.email,
-        phone: response.user.phone || "",
-        is_staff: response.user.is_staff ?? response.user.role !== "customer",
-        role: response.user.role,
-      };
-      auth.login(response.access, user, response.refresh);
-      const next = getNextPath();
-      if (user.is_staff) {
-        navigate({ to: "/admin-dashboard" });
-      } else if (needsOnboarding(response.customer)) {
-        if (next) {
-          window.sessionStorage.setItem("post_onboarding_next", next);
-        }
-        window.location.href = "/onboarding";
-      } else if (next) {
-        window.location.href = next;
+      if (mfaChallenge) {
+        const response = await verifyLoginOtp(mfaChallenge, otpCode);
+        completeLogin(response);
       } else {
-        navigate({ to: "/" });
+        const response = await login(email, password);
+        if (isLoginMfaChallenge(response)) {
+          setMfaChallenge(response);
+          setOtpCode("");
+          setNoticeMessage(
+            `We sent a verification code to ${response.email}. It expires in ${response.expires_in_minutes} minutes.`,
+          );
+        } else {
+          completeLogin(response);
+        }
       }
     } catch {
-      setErrorMessage("Invalid email or password");
+      setErrorMessage(mfaChallenge ? "Invalid or expired verification code" : "Invalid email or password");
     } finally {
       setIsSubmitting(false);
     }
@@ -82,25 +103,42 @@ function LoginPage() {
           </div>
           <div className="rounded-lg border bg-card p-6 shadow-2xl">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email or username</Label>
-                <Input
-                  id="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-              </div>
+              {!mfaChallenge ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="otp">Email verification code</Label>
+                  <Input
+                    id="otp"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                    value={otpCode}
+                    onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+              )}
               <Button
                 type="submit"
                 disabled={isSubmitting}
@@ -109,25 +147,47 @@ function LoginPage() {
                 {isSubmitting ? (
                   <span className="inline-flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in
+                    {mfaChallenge ? "Verifying" : "Signing in"}
                   </span>
                 ) : (
-                  "Login"
+                  mfaChallenge ? "Verify code" : "Login"
                 )}
               </Button>
+              {mfaChallenge && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full rounded-full"
+                  onClick={() => {
+                    setMfaChallenge(null);
+                    setOtpCode("");
+                    setErrorMessage("");
+                    setNoticeMessage("");
+                  }}
+                >
+                  Use different email
+                </Button>
+              )}
+              {noticeMessage && (
+                <p className="rounded-md bg-brand-orange/10 px-3 py-2 text-center text-sm text-brand-navy">
+                  {noticeMessage}
+                </p>
+              )}
               {errorMessage && (
                 <p className="text-center text-sm text-destructive">{errorMessage}</p>
               )}
-              <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <Link
-                  to="/register"
-                  search={{ next: getNextPath() ?? undefined }}
-                  className="font-medium text-brand-orange hover:underline"
-                >
-                  Register
-                </Link>
-              </p>
+              {!mfaChallenge && (
+                <p className="text-center text-sm text-muted-foreground">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    to="/register"
+                    search={{ next: getNextPath() ?? undefined }}
+                    className="font-medium text-brand-orange hover:underline"
+                  >
+                    Register
+                  </Link>
+                </p>
+              )}
             </form>
           </div>
         </div>

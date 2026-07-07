@@ -12,6 +12,8 @@ export type MotorbikeProduct = {
   year: number;
   price: string | number;
   status: string;
+  stock_quantity?: number;
+  available_stock?: number;
   image?: string | null;
   notes?: string;
   average_rating?: number | null;
@@ -34,6 +36,7 @@ export type CartItem = {
   id: number;
   motorbike: number;
   motorbike_detail?: MotorbikeProduct;
+  quantity?: number;
   created_at: string;
   updated_at?: string;
 };
@@ -44,6 +47,7 @@ export type ShopOrder = {
   motorbike: number;
   motorbike_detail?: MotorbikeProduct;
   motorbike_name?: string;
+  quantity?: number;
   customer_name?: string;
   status: string;
   payment_method: string;
@@ -120,6 +124,7 @@ export type OnboardingPayload = {
 
 export type CreateOrderPayload = {
   motorbike: number;
+  quantity?: number;
   payment_method: "mpesa" | "cash" | "bank_transfer" | "installment" | "demo";
   delivery_address: string;
   delivery_city?: string;
@@ -155,10 +160,17 @@ export async function getCartItems() {
   return apiClient<PaginatedResponse<CartItem>>("/shop/cart/");
 }
 
-export async function addCartItem(motorbike: number) {
+export async function addCartItem(motorbike: number, quantity?: number) {
   return apiClient<CartItem>("/shop/cart/", {
     method: "POST",
-    body: JSON.stringify({ motorbike }),
+    body: JSON.stringify(quantity ? { motorbike, quantity } : { motorbike }),
+  });
+}
+
+export async function updateCartItem(cartItemId: number, quantity: number) {
+  return apiClient<CartItem>(`/shop/cart/${cartItemId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ quantity }),
   });
 }
 

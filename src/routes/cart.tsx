@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CustomerRoute } from "../context/AuthContext";
 import { BASE_URL } from "../lib/api/client";
-import { getCartItems, removeCartItem, type CartItem, type MotorbikeProduct } from "../lib/api/shop";
+import { getCartItems, removeCartItem, updateCartItem, type CartItem, type MotorbikeProduct } from "../lib/api/shop";
 import { formatCurrency } from "../lib/utils/formatters";
 
 export const Route = createFileRoute("/cart")({
@@ -66,7 +66,7 @@ function CartContent() {
   const total = useMemo(
     () =>
       items.reduce(
-        (sum, item) => sum + Number(item.motorbike_detail?.price ?? 0),
+        (sum, item) => sum + Number(item.motorbike_detail?.price ?? 0) * (item.quantity ?? 1),
         0,
       ),
     [items],
@@ -76,6 +76,19 @@ function CartContent() {
     setMessage("");
     await removeCartItem(id);
     setItems((current) => current.filter((item) => item.id !== id));
+  }
+
+  async function changeQuantity(itemId: number, newQty: number) {
+    if (newQty < 1) return;
+    setMessage("");
+    try {
+      const updated = await updateCartItem(itemId, newQty);
+      setItems((current) =>
+        current.map((item) => (item.id === itemId ? updated : item)),
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Could not update quantity.");
+    }
   }
 
   return (
@@ -134,11 +147,37 @@ function CartContent() {
                           <p className="mt-1 text-sm text-slate-500">
                             {product?.notes || "Available Motorbuy stock ready for checkout."}
                           </p>
-                          <p className="mt-3 text-2xl font-black text-brand-orange">
-                            {formatCurrency(product?.price ?? 0)}
-                          </p>
+                          <div className="mt-3 flex items-center gap-4">
+                            <p className="text-2xl font-black text-brand-orange">
+                              {formatCurrency(product?.price ?? 0)}
+                            </p>
+                            <span className="text-sm text-slate-400">× {item.quantity ?? 1}</span>
+                            <span className="text-lg font-bold text-slate-700">
+                              = {formatCurrency(Number(product?.price ?? 0) * (item.quantity ?? 1))}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-1 rounded-full border">
+                            <button
+                              type="button"
+                              className="flex h-8 w-8 items-center justify-center rounded-l-full text-lg font-bold hover:bg-slate-100"
+                              onClick={() => void changeQuantity(item.id, (item.quantity ?? 1) - 1)}
+                              disabled={(item.quantity ?? 1) <= 1}
+                            >
+                              −
+                            </button>
+                            <span className="min-w-[2rem] text-center text-sm font-bold">
+                              {item.quantity ?? 1}
+                            </span>
+                            <button
+                              type="button"
+                              className="flex h-8 w-8 items-center justify-center rounded-r-full text-lg font-bold hover:bg-slate-100"
+                              onClick={() => void changeQuantity(item.id, (item.quantity ?? 1) + 1)}
+                            >
+                              +
+                            </button>
+                          </div>
                           <Button
                             className="rounded-full bg-brand-orange text-white hover:bg-brand-orange/90"
                             onClick={() =>
@@ -148,7 +187,7 @@ function CartContent() {
                               })
                             }
                           >
-                            Checkout this bike
+                            Checkout
                           </Button>
                           <Button
                             variant="outline"
@@ -169,16 +208,21 @@ function CartContent() {
                 <p className="text-sm font-bold uppercase tracking-wide text-slate-500">Cart summary</p>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-slate-600">Items</span>
-                  <span className="font-black">{items.length}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-slate-600">Visible total</span>
-                  <span className="font-black">{formatCurrency(total)}</span>
-                </div>
-                <p className="mt-4 text-xs leading-5 text-slate-500">
-                  Because each listed motorbike is a single stock unit, checkout confirms one selected
-                  bike at a time.
-                </p>
+                <span className="font-black">{items.length}</span>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-slate-600">Total quantity</span>
+                <span className="font-black">
+                  {items.reduce((sum, item) => sum + (item.quantity ?? 1), 0)}
+                </span>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-slate-600">Total amount</span>
+                <span className="font-black">{formatCurrency(total)}</span>
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                Adjust quantities per motorbike above. Cart totals include quantity × unit price.
+              </p>
                 {message ? <p className="mt-3 text-sm text-destructive">{message}</p> : null}
                 <Button
                   className="mt-5 w-full rounded-full bg-brand-orange text-white hover:bg-brand-orange/90"

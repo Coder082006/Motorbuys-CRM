@@ -132,22 +132,29 @@ function CheckoutContent() {
     [isMultiCheckout, primaryProduct, products.length],
   );
   const orderTotal = useMemo(
-    () => products.reduce((sum, product) => sum + Number(product.price || 0), 0),
-    [products],
+    () =>
+      cartItems.reduce(
+        (sum, item) => sum + Number(item.motorbike_detail?.price ?? 0) * (item.quantity ?? 1),
+        0,
+      ),
+    [cartItems],
   );
   const customerName = auth.user?.name || auth.user?.email || "Customer";
 
   async function placeOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (products.length === 0) return;
+    if (cartItems.length === 0) return;
 
     setErrorMessage("");
     setIsPlacingOrder(true);
     try {
       const createdOrders: ShopOrder[] = [];
-      for (const product of products) {
+      for (const item of cartItems) {
+        const product = item.motorbike_detail;
+        if (!product) continue;
         const created = await createShopOrder({
           motorbike: product.id,
+          quantity: item.quantity ?? 1,
           payment_method: "demo",
           delivery_address: deliveryAddress,
           delivery_city: deliveryCity,
@@ -270,17 +277,21 @@ function CheckoutContent() {
               </p>
               {isMultiCheckout ? (
                 <div className="mt-5 grid gap-3">
-                  {products.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3">
-                      <div>
-                        <p className="font-semibold">{productName(product)}</p>
-                        <p className="text-xs text-slate-500">
-                          {product.year || "N/A"} • {product.color || "N/A"} • {product.model_detail?.engine_cc || "N/A"} cc
-                        </p>
+                  {cartItems.map((item) => {
+                    const p = item.motorbike_detail;
+                    if (!p) return null;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3">
+                        <div>
+                          <p className="font-semibold">{productName(p)}</p>
+                          <p className="text-xs text-slate-500">
+                            {p.year || "N/A"} • {p.color || "N/A"} • {p.model_detail?.engine_cc || "N/A"} cc × {item.quantity ?? 1}
+                          </p>
+                        </div>
+                        <span className="font-black">{formatCurrency(Number(p.price ?? 0) * (item.quantity ?? 1))}</span>
                       </div>
-                      <span className="font-black">{formatCurrency(product.price)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : primaryProduct ? (
                 <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">

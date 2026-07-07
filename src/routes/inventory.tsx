@@ -22,9 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search, Pencil, PlusCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatters";
 import { BASE_URL, getResults } from "@/lib/api/client";
+import { createBikeModel } from "@/lib/api/inventory";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
 import {
@@ -122,20 +123,21 @@ function Inventory() {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Motorbike Inventory</h1>
-        <BikeModal
-          open={openModal}
-          onOpenChange={setOpenModal}
-          models={modelList}
-          creating={create.isPending}
-          updating={update.isPending}
-          onCreate={(payload: unknown) => create.mutate(payload)}
-          onUpdate={(id: number, payload: unknown) => update.mutate({ id, data: payload })}
-          initialData={editing}
-          onSaved={() => {
-            setOpenModal(false);
-            setEditing(null);
-          }}
-        />
+          <BikeModal
+            open={openModal}
+            onOpenChange={setOpenModal}
+            models={modelList}
+            creating={create.isPending}
+            updating={update.isPending}
+            onCreate={(payload: unknown) => create.mutateAsync(payload)}
+            onUpdate={(id: number, payload: unknown) => update.mutateAsync({ id, data: payload })}
+            initialData={editing}
+            onSaved={() => {
+              setOpenModal(false);
+              setEditing(null);
+              modelsQ.refetch();
+            }}
+          />
       </div>
       <Card className="p-4 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -233,6 +235,7 @@ function Inventory() {
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {b.color} - {b.year} - {b.model_detail?.engine_cc}cc
+                    <span className="ml-2 font-semibold text-brand-orange">Stock: {b.stock_quantity ?? 1}</span>
                   </div>
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-brand-orange font-bold">{formatCurrency(b.price)}</span>
@@ -294,15 +297,26 @@ function BikeModal({
       chassis_number: "",
       engine_number: "",
       price: "",
+      stock_quantity: 1,
       status: "available",
       notes: "",
     },
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    initialData?.image ? imageForBike(initialData) : null,
+  );
+  const [newModelMode, setNewModelMode] = useState(false);
+  const [newModel, setNewModel] = useState({ brand: "", model_name: "", engine_cc: "", bike_type: "manual" });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // sync external open prop
   if (open !== undefined && open !== isOpen) setIsOpen(open);
-  if (initialData && initialData.id && initialData.id !== form.id) setForm(initialData);
+  if (initialData && initialData.id && initialData.id !== form.id) {
+    setForm(initialData);
+    setImagePreview(initialData.image ? imageForBike(initialData) : null);
+    setImageFile(null);
+  }
 
   function close() {
     setIsOpen(false);
@@ -314,20 +328,60 @@ function BikeModal({
       chassis_number: "",
       engine_number: "",
       price: "",
+      stock_quantity: 1,
       status: "available",
       notes: "",
     });
+    setImageFile(null);
+    setImagePreview(null);
+    setNewModelMode(false);
+    setNewModel({ brand: "", model_name: "", engine_cc: "", bike_type: "manual" });
     setErrors({});
+  }
+
+  function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   }
 
   async function submit(e?: any) {
     e?.preventDefault();
     setErrors({});
     try {
-      if (form.id) {
-        await onUpdate(form.id, form);
+      let modelId = form.model;
+      if (newModelMode) {
+        if (!newModel.brand.trim() || !newModel.model_name.trim()) {
+          setErrors({ _general: "Brand and model name are required for a new model." });
+          return;
+        }
+        const created = await createBikeModel({
+          brand: newModel.brand.trim(),
+          model_name: newModel.model_name.trim(),
+          engine_cc: Number(newModel.engine_cc) || 150,
+          bike_type: newModel.bike_type,
+        });
+        modelId = (created as any).id;
+        (window as any).__modelsChanged = true;
+      }
+      const finalForm = { ...form, model: modelId };
+      let payload: any;
+      if (imageFile) {
+        payload = new FormData();
+        for (const key in finalForm) {
+          if (Object.prototype.hasOwnProperty.call(finalForm, key)) {
+            payload.append(key, String(finalForm[key]));
+          }
+        }
+        payload.append("image", imageFile);
       } else {
-        await onCreate(form);
+        payload = finalForm;
+      }
+      if (form.id) {
+        await onUpdate(form.id, payload);
+      } else {
+        await onCreate(payload);
       }
       close();
       onSaved?.();
@@ -359,22 +413,69 @@ function BikeModal({
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4 grid-cols-1 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>Model</Label>
-            <Select
-              value={String(form.model || "")}
-              onValueChange={(v) => setForm((s: any) => ({ ...s, model: Number(v) }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                {models?.map((m: any) => (
-                  <SelectItem key={m.id} value={String(m.id)}>
-                    {m.brand} {m.model_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label>{newModelMode ? "New Model" : "Model"}</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 text-xs text-brand-orange"
+                onClick={() => {
+                  setNewModelMode(!newModelMode);
+                  if (!newModelMode) setForm((s: any) => ({ ...s, model: "" }));
+                }}
+              >
+                {newModelMode ? "Pick existing" : <><PlusCircle className="mr-1 h-3 w-3" /> Add new</>}
+              </Button>
+            </div>
+            {newModelMode ? (
+              <div className="grid gap-2">
+                <Input
+                  placeholder="Brand (e.g. Honda)"
+                  value={newModel.brand}
+                  onChange={(e) => setNewModel((s) => ({ ...s, brand: e.target.value }))}
+                />
+                <Input
+                  placeholder="Model name (e.g. CBR 250)"
+                  value={newModel.model_name}
+                  onChange={(e) => setNewModel((s) => ({ ...s, model_name: e.target.value }))}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Engine cc"
+                    value={newModel.engine_cc}
+                    onChange={(e) => setNewModel((s) => ({ ...s, engine_cc: e.target.value }))}
+                  />
+                  <Select value={newModel.bike_type} onValueChange={(v) => setNewModel((s) => ({ ...s, bike_type: v }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="automatic">Automatic</SelectItem>
+                      <SelectItem value="semi-automatic">Semi-Automatic</SelectItem>
+                      <SelectItem value="manual">Manual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : (
+              <Select
+                value={String(form.model || "")}
+                onValueChange={(v) => setForm((s: any) => ({ ...s, model: Number(v) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {models?.map((m: any) => (
+                    <SelectItem key={m.id} value={String(m.id)}>
+                      {m.brand} {m.model_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {errors.model && <p className="text-destructive text-xs">{errors.model}</p>}
           </div>
           <div className="space-y-1.5">
@@ -425,6 +526,30 @@ function BikeModal({
               value={form.price}
               onChange={(e) => setForm((s: any) => ({ ...s, price: e.target.value }))}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Stock Quantity</Label>
+            <Input
+              type="number"
+              min={0}
+              value={form.stock_quantity ?? 1}
+              onChange={(e) => setForm((s: any) => ({ ...s, stock_quantity: Number(e.target.value) }))}
+            />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>Image</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+            />
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="mt-2 h-32 w-full rounded-lg object-cover"
+              />
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
