@@ -148,3 +148,41 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes ken-burns-1 {
+  0% { transform: scale(1.15) translate(-2%, -1%); }
+  100% { transform: scale(1) translate(1%, 1%); }
+}
+@keyframes ken-burns-2 {
+  0% { transform: scale(1) translate(1%, -2%); }
+  100% { transform: scale(1.15) translate(-1%, 2%); }
+}
+@keyframes ken-burns-3 {
+  0% { transform: scale(1.1) translate(2%, 1%); }
+  100% { transform: scale(1) translate(-2%, -1%); }
+}
+@keyframes ken-burns-4 {
+  0% { transform: scale(1) translate(-1%, 2%); }
+  100% { transform: scale(1.12) translate(2%, -1%); }
+}
+@keyframes ken-burns-5 {
+  0% { transform: scale(1.15) translate(1%, 1%); }
+  100% { transform: scale(1.05) translate(-2%, -2%); }
+}
+@keyframes ken-burns-6 {
+  0% { transform: scale(1.05) translate(-2%, 1%); }
+  100% { transform: scale(1.15) translate(1%, -1%); }
+}
+
+.animate-ken-burns-1 { animation: ken-burns-1 5s ease-out forwards; }
+.animate-ken-burns-2 { animation: ken-burns-2 5s ease-out forwards; }
+.animate-ken-burns-3 { animation: ken-burns-3 5s ease-out forwards; }
+.animate-ken-burns-4 { animation: ken-burns-4 5s ease-out forwards; }
+.animate-ken-burns-5 { animation: ken-burns-5 5s ease-out forwards; }
+.animate-ken-burns-6 { animation: ken-burns-6 5s ease-out forwards; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink { animation: blink 0.8s step-end infinite; }

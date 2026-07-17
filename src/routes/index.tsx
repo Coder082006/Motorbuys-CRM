@@ -18,7 +18,7 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BASE_URL } from "@/lib/api/client";
 import {
@@ -29,7 +29,23 @@ import {
 } from "@/lib/api/shop";
 import { formatCurrency } from "@/lib/utils/formatters";
 import { useAuth } from "../context/AuthContext";
-import heroBackground from "../../bike2.jpg";
+import heroBike1 from "../../Hero bikes/bike 1.jpeg";
+import heroBike2 from "../../Hero bikes/bike 2.jpeg";
+import heroBike3 from "../../Hero bikes/bike 3.jpeg";
+import heroBike4 from "../../Hero bikes/bike 4.png";
+import heroBike5 from "../../Hero bikes/bike 5.jpg";
+import heroBike6 from "../../Hero bikes/bike 6.jpeg";
+
+const heroImages = [heroBike1, heroBike2, heroBike3, heroBike4, heroBike5, heroBike6];
+
+const kenBurnsAnimations = [
+  "animate-ken-burns-1",
+  "animate-ken-burns-2",
+  "animate-ken-burns-3",
+  "animate-ken-burns-4",
+  "animate-ken-burns-5",
+  "animate-ken-burns-6",
+];
 
 export const Route = createFileRoute("/")({
   component: ShopHomePage,
@@ -660,6 +676,49 @@ function ShopHomePage() {
   );
 }
 
+function useTypewriter(text: string, typeSpeed = 80, pauseMs = 10000, backspaceSpeed = 40) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let cancelled = false;
+    let timeout: ReturnType<typeof setTimeout>;
+
+    function type(index: number) {
+      if (cancelled) return;
+      if (index <= text.length) {
+        setDisplayed(text.slice(0, index));
+        timeout = setTimeout(() => type(index + 1), typeSpeed);
+      } else {
+        setDone(true);
+        timeout = setTimeout(() => backspace(text.length), pauseMs);
+      }
+    }
+
+    function backspace(index: number) {
+      if (cancelled) return;
+      if (index > 0) {
+        setDisplayed(text.slice(0, index - 1));
+        setDone(false);
+        timeout = setTimeout(() => backspace(index - 1), backspaceSpeed);
+      } else {
+        timeout = setTimeout(() => type(0), 800);
+      }
+    }
+
+    timeout = setTimeout(() => type(0), 600);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [text, typeSpeed, pauseMs, backspaceSpeed]);
+
+  return { displayed, done };
+}
+
 function HeroSection({
   availableCount,
   language,
@@ -670,14 +729,34 @@ function HeroSection({
   onBrowse: () => void;
 }) {
   const isSwahili = language === "sw";
+  const [currentImage, setCurrentImage] = useState(0);
+
+  const headlineText = isSwahili
+    ? "Pata pikipiki sahihi kwa matumizi yako ya kila siku."
+    : "Find the right motorbike for your daily use.";
+  const { displayed, done } = useTypewriter(headlineText);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <section className="relative min-h-[560px] overflow-hidden rounded-none bg-slate-900">
-      <img
-        src={heroBackground}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center opacity-90"
-      />
+      {heroImages.map((src, index) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${
+            index === currentImage
+              ? `opacity-90 ${kenBurnsAnimations[index]}`
+              : "opacity-0 scale-105"
+          }`}
+        />
+      ))}
       <div className="absolute inset-0 bg-slate-950/45" />
       <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#f4f1ec] to-transparent" />
       <div className="relative flex min-h-[560px] w-full flex-col items-center justify-center px-6 py-16 text-center md:px-10 lg:px-14">
@@ -686,9 +765,8 @@ function HeroSection({
             {isSwahili ? "Duka la pikipiki" : "Motorbike shop"}
           </div>
           <h1 className="text-4xl font-bold leading-tight text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] md:text-6xl">
-            {isSwahili
-              ? "Pata pikipiki sahihi kwa matumizi yako ya kila siku."
-              : "Find the right motorbike for your daily use."}
+            {displayed}
+            {!done && <span className="inline-block w-[3px] ml-0.5 animate-blink align-middle bg-white h-[0.85em]" />}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base font-medium leading-7 text-orange-100 drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)] md:text-lg">
             {isSwahili
