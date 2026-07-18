@@ -149,40 +149,78 @@
   }
 }
 
-@keyframes ken-burns-1 {
-  0% { transform: scale(1.15) translate(-2%, -1%); }
-  100% { transform: scale(1) translate(1%, 1%); }
-}
-@keyframes ken-burns-2 {
-  0% { transform: scale(1) translate(1%, -2%); }
-  100% { transform: scale(1.15) translate(-1%, 2%); }
-}
-@keyframes ken-burns-3 {
-  0% { transform: scale(1.1) translate(2%, 1%); }
-  100% { transform: scale(1) translate(-2%, -1%); }
-}
-@keyframes ken-burns-4 {
-  0% { transform: scale(1) translate(-1%, 2%); }
-  100% { transform: scale(1.12) translate(2%, -1%); }
-}
-@keyframes ken-burns-5 {
-  0% { transform: scale(1.15) translate(1%, 1%); }
-  100% { transform: scale(1.05) translate(-2%, -2%); }
-}
-@keyframes ken-burns-6 {
-  0% { transform: scale(1.05) translate(-2%, 1%); }
-  100% { transform: scale(1.15) translate(1%, -1%); }
+/* Premium Hero Background */
+.hero-premium-bg {
+  background: linear-gradient(135deg, #0a0a0f 0%, #111118 40%, #0d0d14 100%);
 }
 
-.animate-ken-burns-1 { animation: ken-burns-1 5s ease-out forwards; }
-.animate-ken-burns-2 { animation: ken-burns-2 5s ease-out forwards; }
-.animate-ken-burns-3 { animation: ken-burns-3 5s ease-out forwards; }
-.animate-ken-burns-4 { animation: ken-burns-4 5s ease-out forwards; }
-.animate-ken-burns-5 { animation: ken-burns-5 5s ease-out forwards; }
-.animate-ken-burns-6 { animation: ken-burns-6 5s ease-out forwards; }
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+.hero-grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
-.animate-blink { animation: blink 0.8s step-end infinite; }
+
+.hero-dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Diagonal speed lines — faint racing streaks */
+.hero-speed-lines {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    transparent,
+    transparent 80px,
+    rgba(255, 255, 255, 0.06) 80px,
+    rgba(255, 255, 255, 0.06) 81px
+  );
+}
+
+/* Concentric radial rings — engineering/blueprint feel */
+.hero-radial-rings {
+  background-image:
+    radial-gradient(circle at 55% 50%, transparent 120px, rgba(255, 255, 255, 0.06) 121px, transparent 122px),
+    radial-gradient(circle at 55% 50%, transparent 200px, rgba(255, 255, 255, 0.06) 201px, transparent 202px),
+    radial-gradient(circle at 55% 50%, transparent 300px, rgba(255, 255, 255, 0.055) 301px, transparent 302px),
+    radial-gradient(circle at 55% 50%, transparent 420px, rgba(255, 255, 255, 0.05) 421px, transparent 422px),
+    radial-gradient(circle at 55% 50%, transparent 560px, rgba(255, 255, 255, 0.04) 561px, transparent 562px);
+}
+
+/* Curved racing lines — SVG-based topographic contours */
+.hero-contour-lines {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Cpath d='M-100 500 Q200 300 500 450 T1100 350' fill='none' stroke='rgba(255,255,255,0.12)' stroke-width='1'/%3E%3Cpath d='M-50 550 Q250 350 550 500 T1150 400' fill='none' stroke='rgba(255,255,255,0.10)' stroke-width='1'/%3E%3Cpath d='M0 600 Q300 400 600 550 T1200 450' fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3Cpath d='M-100 200 Q300 50 600 180 T1200 100' fill='none' stroke='rgba(255,255,255,0.10)' stroke-width='1'/%3E%3Cpath d='M-50 250 Q350 100 650 230 T1250 150' fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 800px 600px;
+}
+
+/* Abstract airflow / aerodynamic curves */
+.hero-airflow {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3Cpath d='M-200 400 C200 350 400 200 800 300 S1200 150 1600 250' fill='none' stroke='rgba(255,255,255,0.10)' stroke-width='1.5'/%3E%3Cpath d='M-200 450 C250 400 450 250 850 350 S1250 200 1650 300' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1'/%3E%3Cpath d='M-200 500 C300 450 500 300 900 400 S1300 250 1700 350' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 1200px 800px;
+}
+
+/* Geometric frame lines — angular motorcycle-frame inspired */
+.hero-frame-lines {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cline x1='0' y1='0' x2='400' y2='400' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3Cline x1='400' y1='0' x2='0' y2='400' stroke='rgba(255,255,255,0.08)' stroke-width='1'/%3E%3Cline x1='200' y1='0' x2='200' y2='400' stroke='rgba(255,255,255,0.05)' stroke-width='1'/%3E%3Cline x1='0' y1='200' x2='400' y2='200' stroke='rgba(255,255,255,0.05)' stroke-width='1'/%3E%3Ccircle cx='200' cy='200' r='150' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3Ccircle cx='200' cy='200' r='80' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 400px 400px;
+}
+
+/* Floating particles animation */
+@keyframes particle-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  50% { transform: translate(30px, -20px) scale(1.2); opacity: 0.6; }
+}
+@keyframes particle-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+  50% { transform: translate(-20px, 15px) scale(1.1); opacity: 0.5; }
+}
+@keyframes particle-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+  50% { transform: translate(15px, 25px) scale(0.9); opacity: 0.45; }
+}
+
+.hero-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
