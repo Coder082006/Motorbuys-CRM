@@ -119,6 +119,7 @@ const uiText = {
 };
 
 const shelfTranslations: Record<string, { en: string; sw: string }> = {
+  "Recommended for you": { en: "Recommended for you", sw: "Mapendekezo yako" },
   "Automatic favorites": { en: "Automatic favorites", sw: "Pikipiki za automatic" },
   "Semi-automatic picks": { en: "Semi-automatic picks", sw: "Pikipiki za semi-automatic" },
   "Manual performance": { en: "Manual performance", sw: "Pikipiki za manual" },
@@ -386,6 +387,84 @@ function isAvailable(product: MotorbikeProduct) {
   return product.status === "available" && (product.available_stock ?? product.stock_quantity ?? 0) > 0;
 }
 
+type CustomerPreferenceProfile = {
+  preferred_brands?: string | string[] | null;
+  budget_range?: string | null;
+};
+
+function readCustomerPreferences(): CustomerPreferenceProfile | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.sessionStorage.getItem("customer");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as CustomerPreferenceProfile;
+  } catch {
+    return null;
+  }
+}
+
+function parsePreferredBrands(value: CustomerPreferenceProfile["preferred_brands"]) {
+  if (Array.isArray(value)) {
+    return value.map((brand) => brand.trim().toLowerCase()).filter(Boolean);
+  }
+
+  return String(value || "")
+    .split(/[,|]/)
+    .map((brand) => brand.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function budgetBounds(value?: string | null) {
+  const budget = (value || "").toLowerCase();
+  if (!budget) return null;
+  if (budget.includes("under") || budget.includes("below")) return { min: 0, max: 2_000_000 };
+  if (budget.includes("2m") && budget.includes("4m")) return { min: 2_000_000, max: 4_000_000 };
+  if (budget.includes("4m") && budget.includes("6m")) return { min: 4_000_000, max: 6_000_000 };
+  if (budget.includes("above") || budget.includes("over")) return { min: 6_000_000, max: Number.POSITIVE_INFINITY };
+  return null;
+}
+
+function productMatchesBudget(product: MotorbikeProduct, value?: string | null) {
+  const bounds = budgetBounds(value);
+  if (!bounds) return false;
+  const price = Number(product.price || 0);
+  return price >= bounds.min && price <= bounds.max;
+}
+
+function personalizeProducts(products: DisplayProduct[], preferences: CustomerPreferenceProfile | null) {
+  const preferredBrands = parsePreferredBrands(preferences?.preferred_brands);
+  const hasBudget = Boolean(budgetBounds(preferences?.budget_range));
+  if (preferredBrands.length === 0 && !hasBudget) {
+    return { products, applied: false };
+  }
+
+  const hasAnyMatch = products.some((product) => {
+    if (!isAvailable(product)) return false;
+    const brand = product.model_detail?.brand?.toLowerCase() || "";
+    const brandMatch = preferredBrands.some((preferred) => brand.includes(preferred));
+    const budgetMatch = productMatchesBudget(product, preferences?.budget_range);
+    return brandMatch || budgetMatch;
+  });
+
+  if (!hasAnyMatch) {
+    return { products, applied: false };
+  }
+
+  return {
+    applied: true,
+    products: [...products].sort((a, b) => {
+      const score = (product: DisplayProduct) => {
+        if (!isAvailable(product)) return 0;
+        const brand = product.model_detail?.brand?.toLowerCase() || "";
+        const brandMatch = preferredBrands.some((preferred) => brand.includes(preferred));
+        const budgetMatch = productMatchesBudget(product, preferences?.budget_range);
+        return (brandMatch ? 2 : 0) + (budgetMatch ? 1 : 0);
+      };
+      return score(b) - score(a);
+    }),
+  };
+}
+
 function shelfTitle(product: MotorbikeProduct) {
   const bikeType = product.model_detail?.bike_type?.toLowerCase() ?? "";
   if (bikeType.includes("semi")) return "Semi-automatic picks";
@@ -407,6 +486,11 @@ function translateShelfTitle(title: string, language: Language) {
 }
 
 function translateShelfSubtitle(title: string, language: Language) {
+  if (title.includes("Recommended")) {
+    return language === "sw"
+      ? "Pikipiki zinazolingana zaidi na brand na bajeti uliyochagua."
+      : "Bikes closest to the brand and budget you shared during onboarding.";
+  }
   if (language === "en") return shelfSubtitle(title);
   if (title.includes("Automatic")) return "Rahisi kuendesha mjini na nzuri kwa matumizi ya kila siku.";
   if (title.includes("Semi")) return "Inafaa kwa kazi, delivery, na safari za kawaida.";
@@ -460,27 +544,41 @@ function ShopHomePage() {
   const allProducts = ((productsQ.data ?? []) as DisplayProduct[]).length
     ? ((productsQ.data ?? []) as DisplayProduct[])
     : demoProducts;
+  const customerPreferences = useMemo(() => readCustomerPreferences(), [auth.user?.id]);
 
   const products = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return allProducts;
+    const visibleProducts = !term
+      ? allProducts
+      : allProducts.filter((product) => {
+          const haystack = [
+            productName(product),
+            product.color,
+            product.year,
+            product.model_detail?.brand,
+            product.model_detail?.bike_type,
+            product.model_detail?.engine_cc,
+            productDescription(product),
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(term);
+        });
 
-    return allProducts.filter((product) => {
-      const haystack = [
-        productName(product),
-        product.color,
-        product.year,
-        product.model_detail?.bike_type,
-        product.model_detail?.engine_cc,
-        productDescription(product),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [allProducts, search]);
+    return personalizeProducts(visibleProducts, customerPreferences);
+  }, [allProducts, customerPreferences, search]);
 
   const shelves = useMemo<ProductShelf[]>(() => {
+    if (products.applied) {
+      return [
+        {
+          title: "Recommended for you",
+          subtitle: "Bikes closest to the brand and budget you shared during onboarding.",
+          products: products.products,
+        },
+      ];
+    }
+
     const order = [
       "Automatic favorites",
       "Semi-automatic picks",
@@ -489,7 +587,7 @@ function ShopHomePage() {
     ];
     const grouped = new Map<string, DisplayProduct[]>();
 
-    for (const product of products) {
+    for (const product of products.products) {
       const title = shelfTitle(product);
       grouped.set(title, [...(grouped.get(title) ?? []), product]);
     }
@@ -503,7 +601,7 @@ function ShopHomePage() {
       .filter((shelf) => shelf.products.length > 0);
   }, [products]);
 
-  const availableCount = products.filter(isAvailable).length;
+  const availableCount = products.products.filter(isAvailable).length;
 
   function viewDetails(id: number) {
     navigate({ to: "/purchase/$id", params: { id: String(id) } });
@@ -659,6 +757,7 @@ function ShopHomePage() {
                 key={shelf.title}
                 shelf={shelf}
                 language={language}
+                rows={products.applied ? 2 : 1}
                 onDetails={viewDetails}
                 onAddToCart={addToCart}
               />
@@ -830,11 +929,13 @@ function LoadingShelves({ language }: { language: Language }) {
 function MotorbikeShelf({
   shelf,
   language,
+  rows,
   onDetails,
   onAddToCart,
 }: {
   shelf: ProductShelf;
   language: Language;
+  rows: 1 | 2;
   onDetails: (id: number) => void;
   onAddToCart: (id: number) => void;
 }) {
@@ -885,7 +986,9 @@ function MotorbikeShelf({
 
       <div
         ref={scrollerRef}
-        className="flex snap-x gap-5 overflow-x-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`grid snap-x grid-flow-col gap-5 overflow-x-auto pb-6 auto-cols-[82vw] sm:auto-cols-[430px] lg:auto-cols-[calc((100%_-_40px)_/_3)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          rows === 1 ? "grid-rows-1" : "grid-rows-2"
+        }`}
       >
         {shelf.products.map((product, index) => (
           <MotorbikeCard
@@ -919,7 +1022,7 @@ function MotorbikeCard({
   const isSwahili = language === "sw";
 
   return (
-    <article className="group min-w-[82vw] snap-start overflow-hidden rounded-3xl border border-black/10 bg-white shadow-xl shadow-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/10 sm:min-w-[430px] lg:min-w-[calc((100%_-_40px)_/_3)] lg:basis-[calc((100%_-_40px)_/_3)]">
+    <article className="group w-full snap-start overflow-hidden rounded-3xl border border-black/10 bg-white shadow-xl shadow-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/10">
       <div className="relative aspect-[16/11] overflow-hidden bg-slate-900">
         <img
           src={image}

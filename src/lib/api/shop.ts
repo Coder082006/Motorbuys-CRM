@@ -180,6 +180,19 @@ export async function removeCartItem(cartItemId: number) {
   });
 }
 
+// Statuses that mean an order has actually been paid (or moved past payment).
+export const PAID_ORDER_STATUSES = new Set([
+  "paid",
+  "paid_demo",
+  "processing",
+  "out_for_delivery",
+  "delivered",
+]);
+
+export function isOrderPaid(status: string) {
+  return PAID_ORDER_STATUSES.has(status);
+}
+
 export async function completeDemoPayment(orderId: number, phone: string) {
   return apiClient<ShopOrder>(`/shop/orders/${orderId}/complete-demo-payment/`, {
     method: "POST",

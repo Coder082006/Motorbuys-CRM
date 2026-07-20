@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { CustomerRoute, useAuth } from "../context/AuthContext";
 import {
   createShopOrder,
+  completeDemoPayment,
   addCartItem,
   getProductReviews,
   getShopProduct,
+  isOrderPaid,
   type MotorbikeProduct,
   type ProductReview,
   type ShopOrder,
@@ -162,7 +164,18 @@ function PurchaseContent({ id }: { id: number }) {
         phone,
         notes: `Payment method selected: ${paymentLabel(selectedMethod)}`,
       });
-      setOrder(created);
+
+      // Actually charge the order. Without this the order is created as "pending"
+      // and stays that way forever while the customer sees a false success screen.
+      const paid = await completeDemoPayment(created.id, phone);
+      if (!isOrderPaid(paid.status)) {
+        setErrorMessage(
+          "Payment could not be confirmed. You have not been charged. Please try again.",
+        );
+        return;
+      }
+
+      setOrder(paid);
       setShowPayment(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not confirm payment.");

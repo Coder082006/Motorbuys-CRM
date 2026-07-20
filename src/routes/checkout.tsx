@@ -19,6 +19,8 @@ import {
   completeDemoPayment,
   createShopOrder,
   getCartItems,
+  getMyOrders,
+  isOrderPaid,
   type CartItem,
   type MotorbikeProduct,
   type ShopOrder,
@@ -185,11 +187,26 @@ function CheckoutContent() {
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
 
     try {
-      const paid: ShopOrder[] = [];
       for (const order of orders) {
-        paid.push(await completeDemoPayment(order.id, phone));
+        await completeDemoPayment(order.id, phone);
       }
-      setPaidOrders(paid);
+
+      // Re-read the orders from the server (the same source My Orders uses) and
+      // only show success if the backend actually marked them paid. This prevents
+      // a "Payment Successful" screen while an order is still stuck on Pending.
+      const orderIds = new Set(orders.map((order) => order.id));
+      const latest = await getMyOrders();
+      const confirmed = latest.results.filter((order) => orderIds.has(order.id));
+      const stillUnpaid = confirmed.filter((order) => !isOrderPaid(order.status));
+
+      if (confirmed.length < orders.length || stillUnpaid.length > 0) {
+        setErrorMessage(
+          "Payment could not be confirmed for your order. You have not been charged. Please try again.",
+        );
+        return;
+      }
+
+      setPaidOrders(confirmed);
       setShowPayment(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not complete payment.");

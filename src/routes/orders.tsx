@@ -9,6 +9,7 @@ import {
   completeDemoPayment,
   confirmOrderReceived,
   getMyOrders,
+  isOrderPaid,
   submitOrderReview,
   type ShopOrder,
 } from "../lib/api/shop";
@@ -112,6 +113,12 @@ function OrdersContent() {
       setOrders((currentOrders) =>
         currentOrders.map((order) => (order.id === paidOrder.id ? paidOrder : order)),
       );
+      if (!isOrderPaid(paidOrder.status)) {
+        setErrorMessage(
+          "Payment could not be confirmed. You have not been charged. Please try again.",
+        );
+        return;
+      }
       setSuccessMessage(`Payment successful. Order #${paidOrder.customer_order_number} is now paid.`);
       setSelectedOrder(null);
     } catch (error) {
