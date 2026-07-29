@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomerRoute, useAuth } from "../context/AuthContext";
+import { FloatingAd } from "../components/FloatingAd";
 import {
   createShopOrder,
   completeDemoPayment,
@@ -71,6 +72,7 @@ function PurchasePage() {
   return (
     <CustomerRoute>
       <PurchaseContent id={Number(id)} />
+      <FloatingAd />
     </CustomerRoute>
   );
 }

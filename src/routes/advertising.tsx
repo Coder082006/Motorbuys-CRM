@@ -10,12 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Facebook, Instagram, Tv, Radio, Globe, Image as ImageIcon, Pencil } from "lucide-react";
+import { SiteAdsPanel } from "@/components/SiteAdsPanel";
 import { formatCurrency } from "@/lib/utils/formatters";
 import { getResults } from "@/lib/api/client";
 import { RouteGuard } from "../lib/auth";
 import { useAuthRedirect } from "../lib/auth/useAuthRedirect";
-import { useCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign } from "../hooks/queries";
+import { useCampaigns, useCampaignSummary, useCreateCampaign, useUpdateCampaign, useDeleteCampaign } from "../hooks/queries";
 
 export const Route = createFileRoute("/advertising")({
   component: () => (
@@ -47,6 +49,13 @@ const platformLabel = platformOptions.reduce<Record<string, string>>((acc, optio
   acc[option.value] = option.label;
   return acc;
 }, {});
+const statusOptions = [
+  { value: "draft", label: "Draft" },
+  { value: "active", label: "Active" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
+] as const;
+
 const statusColor: Record<string, string> = {
   draft: "bg-slate-200 text-slate-700",
   active: "bg-emerald-100 text-emerald-700",
@@ -61,6 +70,7 @@ function Stat({ label, value }: any) {
 function Advertising() {
   useAuthRedirect();
   const campaignsQ = useCampaigns();
+  const summaryQ = useCampaignSummary();
   const create = useCreateCampaign();
   const update = useUpdateCampaign();
   const remove = useDeleteCampaign();
@@ -68,24 +78,37 @@ function Advertising() {
   const [open, setOpen] = useState(false);
 
   const campaigns = getResults<any>(campaignsQ.data);
-  const totalBudget = campaigns.reduce((s:any, c:any) => s + Number(c.budget || 0), 0);
-  const totalSpent = campaigns.reduce((s:any, c:any) => s + Number(c.amount_spent || 0), 0);
-  const totalLeads = campaigns.reduce((s:any, c:any) => s + Number(c.leads_generated || 0), 0);
+  // Totals come from the server so they cover every campaign, not just the
+  // 20 records on the current page.
+  const summary = summaryQ.data;
 
   function onEdit(c:any) { setEditing(c); setOpen(true); }
   function onDelete(id:number) { if (!confirm("Delete this campaign?")) return; remove.mutate(id); }
 
   return (
     <div className="space-y-5">
+      <h1 className="text-2xl font-bold tracking-tight">Advertising</h1>
+
+      <Tabs defaultValue="campaigns" className="space-y-5">
+        <TabsList>
+          <TabsTrigger value="campaigns">Spend Campaigns</TabsTrigger>
+          <TabsTrigger value="site-ads">Storefront Adverts</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="site-ads">
+          <SiteAdsPanel />
+        </TabsContent>
+
+        <TabsContent value="campaigns" className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Ad Campaigns</h1>
+        <h2 className="text-lg font-bold tracking-tight">Ad Campaigns</h2>
         <CampaignModal open={open} onOpenChange={setOpen} creating={create.isPending} updating={update.isPending} onCreate={(p:any)=>create.mutate(p)} onUpdate={(id:any,p:any)=>update.mutate({id,data:p})} initialData={editing} onSaved={()=>{ setOpen(false); setEditing(null); campaignsQ.refetch(); }} />
       </div>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total Campaigns" value={campaigns.length} />
-        <Stat label="Total Budget" value={formatCurrency(totalBudget)} />
-        <Stat label="Total Spent" value={formatCurrency(totalSpent)} />
-        <Stat label="Leads Generated" value={totalLeads} />
+        <Stat label="Total Campaigns" value={summary?.total_campaigns ?? "-"} />
+        <Stat label="Total Budget" value={summary ? formatCurrency(summary.total_budget) : "-"} />
+        <Stat label="Total Spent" value={summary ? formatCurrency(summary.total_spent) : "-"} />
+        <Stat label="Leads Generated" value={summary?.total_leads ?? "-"} />
       </div>
 
       {campaignsQ.isLoading ? (
@@ -143,6 +166,8 @@ function Advertising() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -181,7 +206,10 @@ function CampaignModal({ open, onOpenChange, creating, updating, onCreate, onUpd
         <form onSubmit={submit} className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5 col-span-2"><Label>Title</Label><Input value={form.title} onChange={(e)=>setForm((s:any)=>({...s,title:e.target.value}))} /></div>
           <div className="space-y-1.5"><Label>Platform</Label><Select value={form.platform} onValueChange={(v)=>setForm((s:any)=>({...s,platform:v}))}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{platformOptions.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select></div>
-          <div className="space-y-1.5"><Label>Budget</Label><Input type="number" value={form.budget} onChange={(e)=>setForm((s:any)=>({...s,budget:e.target.value}))} /></div>
+          <div className="space-y-1.5"><Label>Status</Label><Select value={form.status} onValueChange={(v)=>setForm((s:any)=>({...s,status:v}))}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-1.5"><Label>Budget</Label><Input type="number" min={0} value={form.budget} onChange={(e)=>setForm((s:any)=>({...s,budget:e.target.value}))} /></div>
+          <div className="space-y-1.5"><Label>Amount Spent</Label><Input type="number" min={0} value={form.amount_spent ?? 0} onChange={(e)=>setForm((s:any)=>({...s,amount_spent:e.target.value}))} /></div>
+          <div className="space-y-1.5"><Label>Leads Generated</Label><Input type="number" min={0} value={form.leads_generated ?? 0} onChange={(e)=>setForm((s:any)=>({...s,leads_generated:e.target.value}))} /></div>
           <div className="space-y-1.5"><Label>Start Date</Label><Input type="date" value={form.start_date} onChange={(e)=>setForm((s:any)=>({...s,start_date:e.target.value}))} /></div>
           <div className="space-y-1.5"><Label>End Date</Label><Input type="date" value={form.end_date} onChange={(e)=>setForm((s:any)=>({...s,end_date:e.target.value}))} /></div>
           <div className="space-y-1.5 col-span-2"><Label>Target Audience</Label><Input value={form.target_audience} onChange={(e)=>setForm((s:any)=>({...s,target_audience:e.target.value}))} /></div>

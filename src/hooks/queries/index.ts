@@ -5,6 +5,7 @@ export * from "./useInventory";
 export * from "./useSales";
 export * from "./useFinancing";
 export * from "./useAdvertising";
+export * from "./useSiteAds";
 export * from "./useMarketing";
 export * from "./useService";
 export * from "./useReports";

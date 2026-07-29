@@ -127,8 +127,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 
 export async function verifyLoginOtp(challenge: MfaChallenge, code: string) {
-  const endpoint =
-    challenge.auth_kind === "staff" ? "/auth/verify-otp/" : "/shop/auth/verify-otp/";
+  const endpoint = challenge.auth_kind === "staff" ? "/auth/verify-otp/" : "/shop/auth/verify-otp/";
   return storeAuth(
     (await parsePublicAuthResponse(
       await fetch(`${BASE_URL}${endpoint}`, {

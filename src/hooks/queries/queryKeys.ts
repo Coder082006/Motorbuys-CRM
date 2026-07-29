@@ -19,6 +19,16 @@ export const QUERY_KEYS = {
 
   CAMPAIGNS: ["campaigns"],
   CAMPAIGN: (id: number) => ["campaigns", id],
+  CAMPAIGN_SUMMARY: ["campaign_summary"],
+
+  SITE_ADS: ["site_ads"],
+  SITE_AD: (id: number) => ["site_ads", id],
+  SITE_AD_SUMMARY: ["site_ad_summary"],
+  PUBLIC_SITE_ADS: (placement: string, viewer: number | string = "anonymous") => [
+    "public_site_ads",
+    placement,
+    viewer,
+  ],
 
   SMS_CAMPAIGNS: ["sms_campaigns"],
   SMS_CAMPAIGN: (id: number) => ["sms_campaigns", id],

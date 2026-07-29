@@ -29,6 +29,7 @@ import {
 import { formatCurrency } from "@/lib/utils/formatters";
 import { useAuth } from "../context/AuthContext";
 import HeroSection from "@/components/HeroSection";
+import { FloatingAd } from "@/components/FloatingAd";
 
 export const Route = createFileRoute("/")({
   component: ShopHomePage,
@@ -750,6 +751,8 @@ function ShopHomePage() {
       </main>
 
       <Footer language={language} />
+
+      <FloatingAd language={language} />
     </div>
   );
 }

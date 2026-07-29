@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, ShoppingBag, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CustomerRoute } from "../context/AuthContext";
+import { FloatingAd } from "../components/FloatingAd";
 import { BASE_URL } from "../lib/api/client";
 import { getCartItems, removeCartItem, updateCartItem, type CartItem, type MotorbikeProduct } from "../lib/api/shop";
 import { formatCurrency } from "../lib/utils/formatters";
@@ -39,6 +40,7 @@ function CartPage() {
   return (
     <CustomerRoute>
       <CartContent />
+      <FloatingAd />
     </CustomerRoute>
   );
 }
